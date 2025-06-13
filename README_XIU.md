@@ -371,6 +371,18 @@ For development purposes, the `--reload` flag is included in the run command, wh
 
 ## Xiu
 
+## Add Jobs in side-bar
+```
+1.frontend
+2.backend
+3.db
+4.create table in db
+5.restart frontend
+6.run db migration
+alembic upgrade head
+alembic revision --autogenerate -m "add jobs table"
+```
+
 ## Backend Setup and Launch
 
 ### Prerequisites

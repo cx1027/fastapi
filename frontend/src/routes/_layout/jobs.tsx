@@ -3,8 +3,10 @@ import {
   Container,
   EmptyState,
   Flex,
+  Grid,
   Heading,
   Table,
+  Text,
   VStack,
 } from "@chakra-ui/react"
 import { useQuery } from "@tanstack/react-query"
@@ -38,114 +40,147 @@ function getJobsQueryOptions({ page }: { page: number }) {
 }
 
 export const Route = createFileRoute("/_layout/jobs")({
+  validateSearch: jobsSearchSchema,
+  loaderDeps: ({ search: { page } }) => ({ page }),
+  loader: ({ deps: { page } }) => getJobsQueryOptions({ page }),
   component: Jobs,
-  validateSearch: (search) => jobsSearchSchema.parse(search),
 })
 
-function JobsTable() {
-  const navigate = useNavigate({ from: Route.fullPath })
-  const { page } = Route.useSearch()
-
-  const { data, isLoading, isPlaceholderData } = useQuery({
-    ...getJobsQueryOptions({ page }),
-    placeholderData: (prevData) => prevData,
-  })
-
-  const setPage = (page: number) =>
-    navigate({
-      search: (prev: { [key: string]: string }) => ({ ...prev, page }),
-    })
-
-  const jobs = data?.data.slice(0, PER_PAGE) ?? []
-  const count = data?.count ?? 0
-
-  if (isLoading) {
-    return <PendingJobs />
-  }
-
-  if (jobs.length === 0) {
-    return (
-      <EmptyState.Root>
-        <EmptyState.Content>
-          <EmptyState.Indicator>
-            <FiSearch />
-          </EmptyState.Indicator>
-          <VStack textAlign="center">
-            <EmptyState.Title>You don't have any jobs yet</EmptyState.Title>
-            <EmptyState.Description>
-              Add a new job to get started
-            </EmptyState.Description>
-          </VStack>
-        </EmptyState.Content>
-      </EmptyState.Root>
-    )
-  }
-
-  return (
-    <>
-      <Table.Root size={{ base: "sm", md: "md" }}>
-        <Table.Header>
-          <Table.Row>
-            <Table.ColumnHeader w="sm">ID</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Title</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Description</Table.ColumnHeader>
-            <Table.ColumnHeader w="sm">Actions</Table.ColumnHeader>
-          </Table.Row>
-        </Table.Header>
-        <Table.Body>
-          {jobs?.map((job) => (
-            <Table.Row key={job.id} opacity={isPlaceholderData ? 0.5 : 1}>
-              <Table.Cell truncate maxW="sm">
-                {job.id}
-              </Table.Cell>
-              <Table.Cell truncate maxW="sm">
-                {job.title}
-              </Table.Cell>
-              <Table.Cell
-                color={!job.description ? "gray" : "inherit"}
-                truncate
-                maxW="30%"
-              >
-                {job.description || "N/A"}
-              </Table.Cell>
-              <Table.Cell>
-                <JobActionsMenu
-                  job={{
-                    id: Number(job.id),
-                    title: job.title,
-                    description: job.description || null,
-                  }}
-                />
-              </Table.Cell>
-            </Table.Row>
-          ))}
-        </Table.Body>
-      </Table.Root>
-      <Flex justifyContent="flex-end" mt={4}>
-        <PaginationRoot
-          count={count}
-          pageSize={PER_PAGE}
-          onPageChange={({ page }) => setPage(page)}
-        >
-          <Flex>
-            <PaginationPrevTrigger />
-            <PaginationItems />
-            <PaginationNextTrigger />
-          </Flex>
-        </PaginationRoot>
-      </Flex>
-    </>
-  )
-}
-
 function Jobs() {
+  const navigate = useNavigate()
+  const { page } = Route.useSearch()
+  const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
+
+  const latestJob = jobsData?.data?.[jobsData.data.length - 1]
+
   return (
-    <Container maxW="full">
-      <Heading size="lg" pt={12}>
-        Jobs Management
-      </Heading>
-      <AddJob />
-      <JobsTable />
+    <Container maxW="container.xl" py={8}>
+      <VStack gap={8} align="stretch">
+        <Flex justify="space-between" align="center">
+          <Heading size="lg">Jobs Management</Heading>
+          <AddJob />
+        </Flex>
+
+        <Grid templateColumns="1fr 2fr" gap={8}>
+          {/* Latest Job Details */}
+          <VStack
+            align="stretch"
+            p={6}
+            bg="white"
+            borderRadius="lg"
+            boxShadow="sm"
+            borderWidth="1px"
+            borderColor="gray.200"
+          >
+            <Heading size="md" mb={4}>
+              Latest Job
+            </Heading>
+            {latestJob ? (
+              <VStack align="stretch" gap={4}>
+                <VStack align="start" gap={1}>
+                  <Text fontWeight="medium" color="gray.600">
+                    Title
+                  </Text>
+                  <Text>{latestJob.title}</Text>
+                </VStack>
+                <VStack align="start" gap={1}>
+                  <Text fontWeight="medium" color="gray.600">
+                    Description
+                  </Text>
+                  <Text>{latestJob.description || "No description"}</Text>
+                </VStack>
+              </VStack>
+            ) : (
+              <EmptyState.Root>
+                <EmptyState.Content>
+                  <EmptyState.Indicator>
+                    <FiSearch />
+                  </EmptyState.Indicator>
+                  <VStack textAlign="center">
+                    <EmptyState.Title>No jobs yet</EmptyState.Title>
+                    <EmptyState.Description>
+                      Add your first job to see it here.
+                    </EmptyState.Description>
+                  </VStack>
+                </EmptyState.Content>
+              </EmptyState.Root>
+            )}
+          </VStack>
+
+          {/* Jobs List */}
+          <VStack align="stretch" gap={4}>
+            {isLoading ? (
+              <PendingJobs />
+            ) : jobsData?.data?.length ? (
+              <Table.Root>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>ID</Table.ColumnHeader>
+                    <Table.ColumnHeader>Title</Table.ColumnHeader>
+                    <Table.ColumnHeader>Description</Table.ColumnHeader>
+                    <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {jobsData.data.map((job) => (
+                    <Table.Row key={job.id}>
+                      <Table.Cell>{job.id}</Table.Cell>
+                      <Table.Cell>{job.title}</Table.Cell>
+                      <Table.Cell>
+                        {job.description || "No description"}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <JobActionsMenu
+                          job={{
+                            id: job.id,
+                            title: job.title,
+                            description: job.description || null,
+                          }}
+                        />
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            ) : (
+              <EmptyState.Root>
+                <EmptyState.Content>
+                  <EmptyState.Indicator>
+                    <FiSearch />
+                  </EmptyState.Indicator>
+                  <VStack textAlign="center">
+                    <EmptyState.Title>No jobs found</EmptyState.Title>
+                    <EmptyState.Description>
+                      Add a job to get started.
+                    </EmptyState.Description>
+                  </VStack>
+                </EmptyState.Content>
+              </EmptyState.Root>
+            )}
+
+            {jobsData?.count ? (
+              <PaginationRoot
+                count={jobsData.count}
+                pageSize={PER_PAGE}
+                page={page}
+                onPageChange={(page) =>
+                  navigate({
+                    search: (prev: { page: number }) => ({ ...prev, page }),
+                  })
+                }
+              >
+                <Flex justify="space-between" align="center">
+                  <PaginationItems />
+                  <Flex gap={2}>
+                    <PaginationPrevTrigger />
+                    <PaginationNextTrigger />
+                  </Flex>
+                </Flex>
+              </PaginationRoot>
+            ) : null}
+          </VStack>
+        </Grid>
+      </VStack>
     </Container>
   )
 } 

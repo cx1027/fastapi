@@ -101,7 +101,9 @@ class JobBase(SQLModel):
 
 # Properties to receive on job creation
 class JobCreate(JobBase):
-    pass
+    title: str = Field(min_length=1, max_length=255)  # type: ignore
+    description: str | None = Field(default=None, max_length=1000)  # type: ignore
+    files: str | None = Field(default=None, max_length=1000)  # type: ignore
 
 
 # Properties to receive on job update

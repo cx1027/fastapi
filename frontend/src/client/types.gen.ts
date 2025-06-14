@@ -38,6 +38,7 @@ export type ItemUpdate = {
 export type JobCreate = {
     title: string;
     description?: (string | null);
+    files?: (string | null);
 };
 
 export type JobPublic = {

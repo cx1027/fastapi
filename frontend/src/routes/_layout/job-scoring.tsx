@@ -68,17 +68,26 @@ const JobScoring = () => {
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
-      if (!jobId) {
-        throw new Error("Job ID is required")
+      if (jobId) {
+        // Update existing job
+        return JobsService.updateJob({ 
+          id: jobId,
+          requestBody: { 
+            title: data.title, 
+            description: data.description,
+            files: JSON.stringify(data.files.map(f => f.name))
+          } 
+        })
+      } else {
+        // Create new job
+        return JobsService.createJob({
+          requestBody: {
+            title: data.title,
+            description: data.description,
+            files: JSON.stringify(data.files.map(f => f.name))
+          }
+        })
       }
-      return JobsService.updateJob({ 
-        id: jobId,
-        requestBody: { 
-          title: data.title, 
-          description: data.description,
-          files: JSON.stringify(data.files.map(f => f.name))
-        } 
-      })
     },
     onSuccess: () => {
       setTitle("")
@@ -88,7 +97,7 @@ const JobScoring = () => {
       navigate({ to: "/job-list" })
     },
     onError: (error) => {
-      console.error("Error updating job:", error)
+      console.error("Error saving job:", error)
     },
   })
 

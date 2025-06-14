@@ -38,15 +38,15 @@ const JobScoring = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { jobId } = Route.useSearch()
-  // Main view states
+  // Input states
+  const [inputTitle, setInputTitle] = useState("")
+  const [inputDescription, setInputDescription] = useState("")
+  const [inputFiles, setInputFiles] = useState<{ id: number; name: string }[]>([])
+  // Display states
   const [displayTitle, setDisplayTitle] = useState("")
   const [displayDescription, setDisplayDescription] = useState("")
   const [displayFiles, setDisplayFiles] = useState<{ id: number; name: string }[]>([])
-  // Edit dialog states
-  const [editTitle, setEditTitle] = useState("")
-  const [editDescription, setEditDescription] = useState("")
-  const [editFiles, setEditFiles] = useState<{ id: number; name: string }[]>([])
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const [isSaved, setIsSaved] = useState(false)
   const { showSuccessToast } = useCustomToast()
 
   const { data: jobData } = useQuery({
@@ -57,6 +57,8 @@ const JobScoring = () => {
 
   useEffect(() => {
     if (jobData) {
+      setInputTitle(jobData.title)
+      setInputDescription(jobData.description || "")
       setDisplayTitle(jobData.title)
       setDisplayDescription(jobData.description || "")
       // If there are files in the job data, parse them and set them
@@ -64,31 +66,27 @@ const JobScoring = () => {
         try {
           const parsedFiles = JSON.parse(jobData.files)
           if (Array.isArray(parsedFiles)) {
-            setDisplayFiles(parsedFiles.map((file: string, index: number) => ({
+            const files = parsedFiles.map((file: string, index: number) => ({
               id: index + 1,
               name: file
-            })))
+            }))
+            setInputFiles(files)
+            setDisplayFiles(files)
           }
         } catch (e) {
           console.error("Error parsing files:", e)
           // If parsing fails, try to handle it as a single file name
-          setDisplayFiles([{
+          const file = {
             id: 1,
             name: jobData.files
-          }])
+          }
+          setInputFiles([file])
+          setDisplayFiles([file])
         }
       }
+      setIsSaved(true)
     }
   }, [jobData])
-
-  // Reset edit form when opening dialog
-  useEffect(() => {
-    if (isEditDialogOpen) {
-      setEditTitle(displayTitle)
-      setEditDescription(displayDescription)
-      setEditFiles([...displayFiles])
-    }
-  }, [isEditDialogOpen, displayTitle, displayDescription, displayFiles])
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
@@ -115,28 +113,36 @@ const JobScoring = () => {
       }
     },
     onSuccess: (data) => {
-      showSuccessToast("Job updated successfully.")
-      // Update display states directly
+      showSuccessToast("Job saved successfully.")
+      // Update display states
       setDisplayTitle(data.title)
       setDisplayDescription(data.description || "")
       if (data.files) {
         try {
           const parsedFiles = JSON.parse(data.files)
           if (Array.isArray(parsedFiles)) {
-            setDisplayFiles(parsedFiles.map((file: string, index: number) => ({
+            const files = parsedFiles.map((file: string, index: number) => ({
               id: index + 1,
               name: file
-            })))
+            }))
+            setDisplayFiles(files)
+            setInputFiles(files) // Also update input files to keep them in sync
           }
         } catch (e) {
           console.error("Error parsing files:", e)
-          setDisplayFiles([{
+          const file = {
             id: 1,
             name: data.files
-          }])
+          }
+          setDisplayFiles([file])
+          setInputFiles([file]) // Also update input files to keep them in sync
         }
+      } else {
+        // If no files, clear both display and input files
+        setDisplayFiles([])
+        setInputFiles([])
       }
-      setIsEditDialogOpen(false)
+      setIsSaved(true)
       queryClient.invalidateQueries({ queryKey: ["job", jobId] })
     },
     onError: (error: ApiError) => {
@@ -148,20 +154,31 @@ const JobScoring = () => {
     const fileList = event.target.files
     if (fileList) {
       const newFiles = Array.from(fileList).map((file, index) => ({
-        id: editFiles.length + index + 1,
+        id: inputFiles.length + index + 1,
         name: file.name,
       }))
-      setEditFiles([...editFiles, ...newFiles])
+      setInputFiles([...inputFiles, ...newFiles])
     }
+  }
+
+  const handleDeleteFile = (fileId: number) => {
+    setInputFiles(inputFiles.filter(f => f.id !== fileId))
   }
 
   const handleSave = () => {
     const jobData: JobWithFiles = { 
-      title: editTitle, 
-      description: editDescription, 
-      files: editFiles 
+      title: inputTitle, 
+      description: inputDescription, 
+      files: inputFiles 
     }
     mutation.mutate(jobData)
+  }
+
+  const handleEdit = () => {
+    setInputTitle(displayTitle)
+    setInputDescription(displayDescription)
+    setInputFiles([...displayFiles])
+    setIsSaved(false)
   }
 
   return (
@@ -169,96 +186,120 @@ const JobScoring = () => {
       <VStack gap={8} align="stretch">
         <HStack justify="space-between">
           <Heading size="lg">Job Scoring</Heading>
-          <Button colorScheme="blue" onClick={() => setIsEditDialogOpen(true)}>
-            Edit Job
-          </Button>
+          {isSaved && (
+            <Button colorScheme="blue" onClick={handleEdit}>
+              Edit
+            </Button>
+          )}
         </HStack>
 
-        <HStack align="start" gap={8}>
-          <VStack align="stretch" flex={1}>
-            <VStack align="stretch" mt={4}>
-              <Heading size="md">Job Details</Heading>
+        {!isSaved ? (
+          // Input Form
+          <HStack align="start" gap={8}>
+            <VStack align="stretch" flex={1}>
+              <VStack align="stretch" mt={4}>
+                <Heading size="md">Job Details</Heading>
+                <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+                  <VStack gap={4}>
+                    <Input
+                      placeholder="Enter job title"
+                      value={inputTitle}
+                      onChange={(e) => setInputTitle(e.target.value)}
+                    />
+                    <Textarea
+                      placeholder="Enter job description"
+                      value={inputDescription}
+                      onChange={(e) => setInputDescription(e.target.value)}
+                    />
+                  </VStack>
+                </Box>
+              </VStack>
+            </VStack>
+
+            <VStack align="stretch" flex={1}>
+              <Heading size="md">Files</Heading>
               <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                <Text fontWeight="bold">{displayTitle}</Text>
-                <Text>{displayDescription}</Text>
+                <VStack gap={4}>
+                  <Input type="file" onChange={handleFileUpload} multiple />
+                  {inputFiles.length > 0 && (
+                    <Table.Root>
+                      <Table.Header>
+                        <Table.Row>
+                          <Table.ColumnHeader>ID</Table.ColumnHeader>
+                          <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                          <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                        </Table.Row>
+                      </Table.Header>
+                      <Table.Body>
+                        {inputFiles.map((file) => (
+                          <Table.Row key={file.id}>
+                            <Table.Cell>{file.id}</Table.Cell>
+                            <Table.Cell>{file.name}</Table.Cell>
+                            <Table.Cell>
+                              <Button 
+                                size="sm" 
+                                colorScheme="red"
+                                onClick={() => handleDeleteFile(file.id)}
+                              >
+                                Delete
+                              </Button>
+                            </Table.Cell>
+                          </Table.Row>
+                        ))}
+                      </Table.Body>
+                    </Table.Root>
+                  )}
+                </VStack>
               </Box>
             </VStack>
-          </VStack>
-
-          <VStack align="stretch" flex={1}>
-            <Table.Root>
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader>ID</Table.ColumnHeader>
-                  <Table.ColumnHeader>File Name</Table.ColumnHeader>
-                  <Table.ColumnHeader>Actions</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {displayFiles.map((file) => (
-                  <Table.Row key={file.id}>
-                    <Table.Cell>{file.id}</Table.Cell>
-                    <Table.Cell>{file.name}</Table.Cell>
-                    <Table.Cell>
-                      <Button 
-                        size="sm" 
-                        colorScheme="red"
-                        onClick={() => setEditFiles(editFiles.filter(f => f.id !== file.id))}
-                      >
-                        Delete
-                      </Button>
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          </VStack>
-        </HStack>
-
-        <DialogRoot open={isEditDialogOpen} onOpenChange={({ open }) => setIsEditDialogOpen(open)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Edit Job</DialogTitle>
-            </DialogHeader>
-            <DialogBody>
-              <VStack gap={4}>
-                <Input
-                  placeholder="Enter job title"
-                  value={editTitle}
-                  onChange={(e) => setEditTitle(e.target.value)}
-                />
-                <Textarea
-                  placeholder="Enter job description"
-                  value={editDescription}
-                  onChange={(e) => setEditDescription(e.target.value)}
-                />
-                <Input type="file" onChange={handleFileUpload} multiple />
-                {editFiles.length > 0 && (
-                  <Text>Selected files: {editFiles.length}</Text>
-                )}
+          </HStack>
+        ) : (
+          // Display View
+          <HStack align="start" gap={8}>
+            <VStack align="stretch" flex={1}>
+              <VStack align="stretch" mt={4}>
+                <Heading size="md">Job Details</Heading>
+                <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+                  <Text fontWeight="bold">{displayTitle}</Text>
+                  <Text>{displayDescription}</Text>
+                </Box>
               </VStack>
-            </DialogBody>
-            <DialogFooter>
-              <DialogActionTrigger asChild>
-                <Button
-                  variant="subtle"
-                  colorPalette="gray"
-                  disabled={mutation.isPending}
-                >
-                  Cancel
-                </Button>
-              </DialogActionTrigger>
-              <Button
-                variant="solid"
-                onClick={handleSave}
-                loading={mutation.isPending}
-              >
-                Save
-              </Button>
-            </DialogFooter>
-            <DialogCloseTrigger />
-          </DialogContent>
-        </DialogRoot>
+            </VStack>
+
+            <VStack align="stretch" flex={1}>
+              <Heading size="md">Files</Heading>
+              <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+                <Table.Root>
+                  <Table.Header>
+                    <Table.Row>
+                      <Table.ColumnHeader>ID</Table.ColumnHeader>
+                      <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                    </Table.Row>
+                  </Table.Header>
+                  <Table.Body>
+                    {displayFiles.map((file) => (
+                      <Table.Row key={file.id}>
+                        <Table.Cell>{file.id}</Table.Cell>
+                        <Table.Cell>{file.name}</Table.Cell>
+                      </Table.Row>
+                    ))}
+                  </Table.Body>
+                </Table.Root>
+              </Box>
+            </VStack>
+          </HStack>
+        )}
+
+        {!isSaved && (
+          <Button
+            colorScheme="blue"
+            onClick={handleSave}
+            loading={mutation.isPending}
+            alignSelf="flex-end"
+          >
+            Save
+          </Button>
+        )}
       </VStack>
     </Container>
   )

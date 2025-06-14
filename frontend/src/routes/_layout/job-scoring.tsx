@@ -12,7 +12,7 @@ import {
   Box,
 } from "@chakra-ui/react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { JobsService } from "../../client"
 import {
   DialogActionTrigger,
@@ -23,8 +23,10 @@ import {
   DialogHeader,
   DialogRoot,
   DialogTitle,
-  DialogTrigger,
 } from "../../components/ui/dialog"
+import useCustomToast from "@/hooks/useCustomToast"
+import { handleError } from "@/utils"
+import type { ApiError } from "@/client/core/ApiError"
 
 interface JobWithFiles {
   title: string
@@ -34,12 +36,18 @@ interface JobWithFiles {
 
 const JobScoring = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const { jobId } = Route.useSearch()
-  const [title, setTitle] = useState("")
-  const [description, setDescription] = useState("")
-  const [files, setFiles] = useState<{ id: number; name: string }[]>([])
-  const [addedJobs, setAddedJobs] = useState<JobWithFiles[]>([])
-  const [isOpen, setIsOpen] = useState(false)
+  // Main view states
+  const [displayTitle, setDisplayTitle] = useState("")
+  const [displayDescription, setDisplayDescription] = useState("")
+  const [displayFiles, setDisplayFiles] = useState<{ id: number; name: string }[]>([])
+  // Edit dialog states
+  const [editTitle, setEditTitle] = useState("")
+  const [editDescription, setEditDescription] = useState("")
+  const [editFiles, setEditFiles] = useState<{ id: number; name: string }[]>([])
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
+  const { showSuccessToast } = useCustomToast()
 
   const { data: jobData } = useQuery({
     queryKey: ["job", jobId],
@@ -49,14 +57,14 @@ const JobScoring = () => {
 
   useEffect(() => {
     if (jobData) {
-      setTitle(jobData.title)
-      setDescription(jobData.description || "")
+      setDisplayTitle(jobData.title)
+      setDisplayDescription(jobData.description || "")
       // If there are files in the job data, parse them and set them
       if (jobData.files) {
         try {
           const parsedFiles = JSON.parse(jobData.files)
           if (Array.isArray(parsedFiles)) {
-            setFiles(parsedFiles.map((file: string, index: number) => ({
+            setDisplayFiles(parsedFiles.map((file: string, index: number) => ({
               id: index + 1,
               name: file
             })))
@@ -64,7 +72,7 @@ const JobScoring = () => {
         } catch (e) {
           console.error("Error parsing files:", e)
           // If parsing fails, try to handle it as a single file name
-          setFiles([{
+          setDisplayFiles([{
             id: 1,
             name: jobData.files
           }])
@@ -72,6 +80,15 @@ const JobScoring = () => {
       }
     }
   }, [jobData])
+
+  // Reset edit form when opening dialog
+  useEffect(() => {
+    if (isEditDialogOpen) {
+      setEditTitle(displayTitle)
+      setEditDescription(displayDescription)
+      setEditFiles([...displayFiles])
+    }
+  }, [isEditDialogOpen, displayTitle, displayDescription, displayFiles])
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
@@ -97,15 +114,33 @@ const JobScoring = () => {
         })
       }
     },
-    onSuccess: () => {
-      setTitle("")
-      setDescription("")
-      setFiles([])
-      setIsOpen(false)
-      navigate({ to: "/job-list" })
+    onSuccess: (data) => {
+      showSuccessToast("Job updated successfully.")
+      // Update display states directly
+      setDisplayTitle(data.title)
+      setDisplayDescription(data.description || "")
+      if (data.files) {
+        try {
+          const parsedFiles = JSON.parse(data.files)
+          if (Array.isArray(parsedFiles)) {
+            setDisplayFiles(parsedFiles.map((file: string, index: number) => ({
+              id: index + 1,
+              name: file
+            })))
+          }
+        } catch (e) {
+          console.error("Error parsing files:", e)
+          setDisplayFiles([{
+            id: 1,
+            name: data.files
+          }])
+        }
+      }
+      setIsEditDialogOpen(false)
+      queryClient.invalidateQueries({ queryKey: ["job", jobId] })
     },
-    onError: (error) => {
-      console.error("Error saving job:", error)
+    onError: (error: ApiError) => {
+      handleError(error)
     },
   })
 
@@ -113,15 +148,19 @@ const JobScoring = () => {
     const fileList = event.target.files
     if (fileList) {
       const newFiles = Array.from(fileList).map((file, index) => ({
-        id: files.length + index + 1,
+        id: editFiles.length + index + 1,
         name: file.name,
       }))
-      setFiles([...files, ...newFiles])
+      setEditFiles([...editFiles, ...newFiles])
     }
   }
 
   const handleSave = () => {
-    const jobData: JobWithFiles = { title, description, files }
+    const jobData: JobWithFiles = { 
+      title: editTitle, 
+      description: editDescription, 
+      files: editFiles 
+    }
     mutation.mutate(jobData)
   }
 
@@ -130,7 +169,7 @@ const JobScoring = () => {
       <VStack gap={8} align="stretch">
         <HStack justify="space-between">
           <Heading size="lg">Job Scoring</Heading>
-          <Button colorScheme="blue" onClick={() => setIsOpen(true)}>
+          <Button colorScheme="blue" onClick={() => setIsEditDialogOpen(true)}>
             Edit Job
           </Button>
         </HStack>
@@ -140,8 +179,8 @@ const JobScoring = () => {
             <VStack align="stretch" mt={4}>
               <Heading size="md">Job Details</Heading>
               <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                <Text fontWeight="bold">{title}</Text>
-                <Text>{description}</Text>
+                <Text fontWeight="bold">{displayTitle}</Text>
+                <Text>{displayDescription}</Text>
               </Box>
             </VStack>
           </VStack>
@@ -156,7 +195,7 @@ const JobScoring = () => {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {files.map((file) => (
+                {displayFiles.map((file) => (
                   <Table.Row key={file.id}>
                     <Table.Cell>{file.id}</Table.Cell>
                     <Table.Cell>{file.name}</Table.Cell>
@@ -164,7 +203,7 @@ const JobScoring = () => {
                       <Button 
                         size="sm" 
                         colorScheme="red"
-                        onClick={() => setFiles(files.filter(f => f.id !== file.id))}
+                        onClick={() => setEditFiles(editFiles.filter(f => f.id !== file.id))}
                       >
                         Delete
                       </Button>
@@ -176,7 +215,7 @@ const JobScoring = () => {
           </VStack>
         </HStack>
 
-        <DialogRoot open={isOpen} onOpenChange={({ open }) => setIsOpen(open)}>
+        <DialogRoot open={isEditDialogOpen} onOpenChange={({ open }) => setIsEditDialogOpen(open)}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Edit Job</DialogTitle>
@@ -185,26 +224,39 @@ const JobScoring = () => {
               <VStack gap={4}>
                 <Input
                   placeholder="Enter job title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  value={editTitle}
+                  onChange={(e) => setEditTitle(e.target.value)}
                 />
                 <Textarea
                   placeholder="Enter job description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
                 />
                 <Input type="file" onChange={handleFileUpload} multiple />
-                {files.length > 0 && (
-                  <Text>Selected files: {files.length}</Text>
+                {editFiles.length > 0 && (
+                  <Text>Selected files: {editFiles.length}</Text>
                 )}
               </VStack>
             </DialogBody>
             <DialogFooter>
-              <DialogCloseTrigger />
-              <Button colorScheme="blue" onClick={handleSave}>
+              <DialogActionTrigger asChild>
+                <Button
+                  variant="subtle"
+                  colorPalette="gray"
+                  disabled={mutation.isPending}
+                >
+                  Cancel
+                </Button>
+              </DialogActionTrigger>
+              <Button
+                variant="solid"
+                onClick={handleSave}
+                loading={mutation.isPending}
+              >
                 Save
               </Button>
             </DialogFooter>
+            <DialogCloseTrigger />
           </DialogContent>
         </DialogRoot>
       </VStack>

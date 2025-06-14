@@ -41,10 +41,11 @@ export type JobCreate = {
 };
 
 export type JobPublic = {
-    title: string;
-    description?: (string | null);
     id: string;
+    title: string;
+    description: (string | null);
     owner_id: string;
+    files: (string | null);
 };
 
 export type JobsPublic = {
@@ -55,6 +56,7 @@ export type JobsPublic = {
 export type JobUpdate = {
     title?: (string | null);
     description?: (string | null);
+    files?: (string | null);
 };
 
 export type Message = {

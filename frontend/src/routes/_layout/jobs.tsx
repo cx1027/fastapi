@@ -53,6 +53,12 @@ function Jobs() {
 
   const latestJob = jobsData?.data?.[jobsData.data.length - 1]
 
+  const handlePageChange = (details: { page: number }) => {
+    navigate({
+      search: { page: details.page },
+    })
+  }
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
@@ -163,11 +169,7 @@ function Jobs() {
                 count={jobsData.count}
                 pageSize={PER_PAGE}
                 page={page}
-                onPageChange={(page) =>
-                  navigate({
-                    search: (prev: { page: number }) => ({ ...prev, page }),
-                  })
-                }
+                onPageChange={handlePageChange}
               >
                 <Flex justify="space-between" align="center">
                   <PaginationItems />

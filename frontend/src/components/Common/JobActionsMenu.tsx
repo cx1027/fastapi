@@ -2,10 +2,10 @@ import React, { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { IconButton } from "@chakra-ui/react"
 import { BsThreeDotsVertical } from "react-icons/bs"
+import { useNavigate } from "@tanstack/react-router"
 import { MenuContent, MenuRoot, MenuTrigger } from "../ui/menu"
 
 import DeleteJob from "@/components/Jobs/DeleteJob"
-import EditJob from "@/components/Jobs/EditJob"
 
 interface JobActionsMenuProps {
   job: {
@@ -16,13 +16,19 @@ interface JobActionsMenuProps {
 }
 
 const JobActionsMenu = ({ job }: JobActionsMenuProps) => {
-  const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const queryClient = useQueryClient()
+  const navigate = useNavigate()
 
   const handleClose = () => {
-    setIsEditOpen(false)
     setIsDeleteOpen(false)
+  }
+
+  const handleEdit = () => {
+    navigate({
+      to: "/job-scoring",
+      search: { jobId: job.id }
+    })
   }
 
   return (
@@ -34,24 +40,13 @@ const JobActionsMenu = ({ job }: JobActionsMenuProps) => {
           </IconButton>
         </MenuTrigger>
         <MenuContent>
-          {isEditOpen ? (
-            <EditJob
-              jobId={job.id}
-              initialData={{
-                title: job.title,
-                description: job.description,
-              }}
-              onClose={handleClose}
-            />
-          ) : (
-            <IconButton
-              variant="ghost"
-              color="inherit"
-              onClick={() => setIsEditOpen(true)}
-            >
-              Edit
-            </IconButton>
-          )}
+          <IconButton
+            variant="ghost"
+            color="inherit"
+            onClick={handleEdit}
+          >
+            Edit
+          </IconButton>
           {isDeleteOpen ? (
             <DeleteJob jobId={job.id} onClose={handleClose} />
           ) : (

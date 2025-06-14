@@ -48,6 +48,12 @@ function JobList() {
   const { page } = Route.useSearch()
   const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
 
+  const handlePageChange = (details: { page: number }) => {
+    navigate({
+      search: { page: details.page },
+    })
+  }
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
@@ -100,11 +106,7 @@ function JobList() {
                 count={jobsData.count}
                 pageSize={PER_PAGE}
                 page={page}
-                onPageChange={(page) =>
-                  navigate({
-                    search: (prev: { page: number }) => ({ ...prev, page }),
-                  })
-                }
+                onPageChange={handlePageChange}
               >
                 <Flex>
                   <PaginationPrevTrigger />

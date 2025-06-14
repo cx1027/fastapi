@@ -118,12 +118,14 @@ class Job(JobBase, table=True):
         foreign_key="user.id", nullable=False, ondelete="CASCADE"
     )
     owner: User | None = Relationship(back_populates="jobs")
+    files: str | None = Field(default=None, max_length=1000)  # type: ignore
 
 
 # Properties to return via API, id is always required
 class JobPublic(JobBase):
     id: uuid.UUID
     owner_id: uuid.UUID
+    files: str | None = Field(default=None, max_length=1000)  # type: ignore
 
 
 class JobsPublic(SQLModel):

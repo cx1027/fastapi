@@ -55,12 +55,19 @@ const JobScoring = () => {
       if (jobData.files) {
         try {
           const parsedFiles = JSON.parse(jobData.files)
-          setFiles(parsedFiles.map((file: string, index: number) => ({
-            id: index + 1,
-            name: file
-          })))
+          if (Array.isArray(parsedFiles)) {
+            setFiles(parsedFiles.map((file: string, index: number) => ({
+              id: index + 1,
+              name: file
+            })))
+          }
         } catch (e) {
           console.error("Error parsing files:", e)
+          // If parsing fails, try to handle it as a single file name
+          setFiles([{
+            id: 1,
+            name: jobData.files
+          }])
         }
       }
     }
@@ -68,6 +75,7 @@ const JobScoring = () => {
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
+      const filesData = data.files.length > 0 ? JSON.stringify(data.files.map(f => f.name)) : null
       if (jobId) {
         // Update existing job
         return JobsService.updateJob({ 
@@ -75,7 +83,7 @@ const JobScoring = () => {
           requestBody: { 
             title: data.title, 
             description: data.description,
-            files: JSON.stringify(data.files.map(f => f.name))
+            files: filesData
           } 
         })
       } else {
@@ -84,7 +92,7 @@ const JobScoring = () => {
           requestBody: {
             title: data.title,
             description: data.description,
-            files: JSON.stringify(data.files.map(f => f.name))
+            files: filesData
           }
         })
       }

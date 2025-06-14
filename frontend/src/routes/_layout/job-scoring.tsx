@@ -90,9 +90,13 @@ const JobScoring = () => {
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
-      const filesData = data.files.length > 0 ? JSON.stringify(data.files.map(f => f.name)) : null
+      // Send the complete file data including names
+      const filesData = JSON.stringify(data.files.map(f => f.name))
+      console.log('=== MUTATION: Sending files data ===', filesData)
+      
       if (jobId) {
-        // Update existing job
+        console.log('=== MUTATION: Updating existing job ===', jobId)
+        // Update existing job - send all fields explicitly
         return JobsService.updateJob({ 
           id: jobId,
           requestBody: { 
@@ -102,6 +106,7 @@ const JobScoring = () => {
           } 
         })
       } else {
+        console.log('=== MUTATION: Creating new job ===')
         // Create new job
         return JobsService.createJob({
           requestBody: {
@@ -113,39 +118,53 @@ const JobScoring = () => {
       }
     },
     onSuccess: (data) => {
+      console.log('=== MUTATION: Success response ===', data)
       showSuccessToast("Job saved successfully.")
-      // Update display states
-      setDisplayTitle(data.title)
-      setDisplayDescription(data.description || "")
+      
+      // Handle files first
+      let files: { id: number; name: string }[] = []
       if (data.files) {
         try {
           const parsedFiles = JSON.parse(data.files)
+          console.log('=== MUTATION: Parsed files ===', parsedFiles)
           if (Array.isArray(parsedFiles)) {
-            const files = parsedFiles.map((file: string, index: number) => ({
+            files = parsedFiles.map((file: string, index: number) => ({
               id: index + 1,
               name: file
             }))
-            setDisplayFiles(files)
-            setInputFiles(files) // Also update input files to keep them in sync
           }
         } catch (e) {
-          console.error("Error parsing files:", e)
-          const file = {
+          console.error('=== MUTATION: Error parsing files ===', e)
+          files = [{
             id: 1,
             name: data.files
-          }
-          setDisplayFiles([file])
-          setInputFiles([file]) // Also update input files to keep them in sync
+          }]
         }
-      } else {
-        // If no files, clear both display and input files
-        setDisplayFiles([])
-        setInputFiles([])
       }
+      
+      console.log('=== MUTATION: Final files array ===', files)
+      
+      // Update all states at once to ensure consistency
+      setDisplayTitle(data.title)
+      setDisplayDescription(data.description || "")
+      setDisplayFiles(files)
+      setInputFiles(files)
       setIsSaved(true)
-      queryClient.invalidateQueries({ queryKey: ["job", jobId] })
+
+      // If this was a new job, update the URL with the new job ID
+      if (!jobId && data.id) {
+        navigate({
+          to: "/job-scoring",
+          search: { jobId: data.id }
+        })
+      }
+      
+      // Invalidate both the specific job query and the jobs list
+      queryClient.invalidateQueries({ queryKey: ["job", jobId || data.id] })
+      queryClient.invalidateQueries({ queryKey: ["jobs"] })
     },
     onError: (error: ApiError) => {
+      console.error('=== MUTATION: Error ===', error)
       handleError(error)
     },
   })
@@ -157,24 +176,36 @@ const JobScoring = () => {
         id: inputFiles.length + index + 1,
         name: file.name,
       }))
+      console.log('=== FILE UPLOAD: New files ===', newFiles)
       setInputFiles([...inputFiles, ...newFiles])
     }
   }
 
   const handleDeleteFile = (fileId: number) => {
-    setInputFiles(inputFiles.filter(f => f.id !== fileId))
+    console.log('=== DELETE FILE: Before deletion ===', inputFiles)
+    const updatedFiles = inputFiles.filter(f => f.id !== fileId)
+    console.log('=== DELETE FILE: After deletion ===', updatedFiles)
+    setInputFiles(updatedFiles)
   }
 
   const handleSave = () => {
+    if (!inputTitle.trim()) {
+      showSuccessToast("Please enter a job title")
+      return
+    }
+
+    console.log('=== SAVE: Current input files ===', inputFiles)
     const jobData: JobWithFiles = { 
       title: inputTitle, 
       description: inputDescription, 
       files: inputFiles 
     }
+    console.log('=== SAVE: Job data being sent ===', jobData)
     mutation.mutate(jobData)
   }
 
   const handleEdit = () => {
+    console.log('=== EDIT: Current display files ===', displayFiles)
     setInputTitle(displayTitle)
     setInputDescription(displayDescription)
     setInputFiles([...displayFiles])

@@ -1,16 +1,18 @@
 import { Box, Flex, Icon, Text } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
 import { Link as RouterLink } from "@tanstack/react-router"
-import { FiBriefcase, FiFileText, FiHome, FiSettings, FiUsers } from "react-icons/fi"
+import { FiBriefcase, FiFileText, FiHome, FiSettings, FiUsers, FiClipboard } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
 
 import type { UserPublic } from "@/client"
 
-const items = [
+export const sidebarItems = [
   { icon: FiHome, title: "Dashboard", path: "/" },
+  { icon: FiUsers, title: "Users", path: "/users" },
   { icon: FiBriefcase, title: "Items", path: "/items" },
   { icon: FiFileText, title: "Jobs", path: "/jobs" },
   { icon: FiFileText, title: "Job List", path: "/job-list" },
+  { icon: FiClipboard, title: "Job Score", path: "/job-scoring" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 
@@ -29,8 +31,8 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
 
   const finalItems: Item[] = currentUser?.is_superuser
-    ? [...items, { icon: FiUsers, title: "Admin", path: "/admin" }]
-    : items
+    ? [...sidebarItems, { icon: FiUsers, title: "Admin", path: "/admin" }]
+    : sidebarItems
 
   const listItems = finalItems.map(({ icon, title, path }) => (
     <RouterLink key={title} to={path} onClick={onClose}>

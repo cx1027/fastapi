@@ -19,6 +19,7 @@ import { Route as LayoutImport } from './routes/_layout'
 import { Route as LayoutIndexImport } from './routes/_layout/index'
 import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutJobsImport } from './routes/_layout/jobs'
+import { Route as LayoutJobScoringImport } from './routes/_layout/job-scoring'
 import { Route as LayoutJobListImport } from './routes/_layout/job-list'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
 import { Route as LayoutAdminImport } from './routes/_layout/admin'
@@ -62,6 +63,11 @@ const LayoutSettingsRoute = LayoutSettingsImport.update({
 
 const LayoutJobsRoute = LayoutJobsImport.update({
   path: '/jobs',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutJobScoringRoute = LayoutJobScoringImport.update({
+  path: '/job-scoring',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -116,6 +122,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutJobListImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/job-scoring': {
+      preLoaderRoute: typeof LayoutJobScoringImport
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/jobs': {
       preLoaderRoute: typeof LayoutJobsImport
       parentRoute: typeof LayoutImport
@@ -138,6 +148,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutAdminRoute,
     LayoutItemsRoute,
     LayoutJobListRoute,
+    LayoutJobScoringRoute,
     LayoutJobsRoute,
     LayoutSettingsRoute,
     LayoutIndexRoute,

@@ -5,7 +5,9 @@ from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
 
 from app.api.deps import CurrentUser, SessionDep
-from app.models import Job, JobCreate, JobPublic, JobsPublic, JobUpdate, Message
+from app.models import Job, JobCreate, JobPublic, JobsPublic, JobUpdate, JobResponseSchema, Message, JobAnalyzeRequest
+
+from ..job import service
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -108,4 +110,9 @@ def delete_job(
         raise HTTPException(status_code=400, detail="Not enough permissions")
     session.delete(job)
     session.commit()
-    return Message(message="Job deleted successfully") 
+    return Message(message="Job deleted successfully")
+
+@router.post("/analyse", response_model=JobResponseSchema)
+async def analyse_job(job_data: JobAnalyzeRequest):
+    result = service.analyse_job(job_data=job_data)
+    return result

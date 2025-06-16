@@ -12,7 +12,7 @@ from groq import Groq
 from app.models import JobResponseSchema
 from app.api.utils import parse_response_to_schema
 
-client = Groq(api_key = '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')
+client = Groq(api_key = 'Groq Key')
 
 
 def output2json(output):

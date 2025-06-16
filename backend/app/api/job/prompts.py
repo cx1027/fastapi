@@ -9,7 +9,7 @@ However, you are allowed to combine the provided details to draw logical conclus
 fn_job_analysis = [
     {
         "name": "AnalyzeJob",
-        "description": "Read the job description and answer question.",
+        "description": "Job description and answer question.",
         "parameters": {
             "type": "object",
             "properties": {

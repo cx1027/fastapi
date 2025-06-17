@@ -7,5 +7,5 @@ htmlcov
 .cache
 .venv
 .env
-backend/.env
+/backend/.env
 

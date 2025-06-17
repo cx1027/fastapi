@@ -1,6 +1,7 @@
 import json
 import os
 import time
+from pathlib import Path
 from datetime import datetime
 
 import jsbeautifier
@@ -12,6 +13,9 @@ from .prompts import fn_candidate_analysis, system_prompt_candidate
 from app.api.utils import LOGGER
 
 from dotenv import load_dotenv
+
+env_path = Path(__file__).parents[3] / '.env'
+load_dotenv(dotenv_path=env_path)
 
 async def save_cv_candidate(file):
     # Prepend the current datetime to the filename
@@ -33,7 +37,7 @@ async def save_cv_candidate(file):
 def output2json(output):
     """GPT Output Object >>> json"""
     opts = jsbeautifier.default_options()
-    return json.loads(jsbeautifier.beautify(output["function_call"]["arguments"], opts))
+    return json.loads(jsbeautifier.beautify(output["tool_calls"][0]["function"]["arguments"], opts))
 
 
 def load_pdf_docx(file_path):

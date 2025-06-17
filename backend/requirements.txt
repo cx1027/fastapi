@@ -18,3 +18,5 @@ jsbeautifier
 langchain
 groq
 langchain_openai
+langchain_community
+pytz

@@ -13,7 +13,7 @@ from .prompts import fn_job_analysis, system_prompt_job
 # from utils import LOGGER
 from groq import Groq
 from app.models import JobResponseSchema
-from app.api.utils import parse_response_to_schema
+# from app.api.utils import parse_response_to_schema
 
 env_path = Path(__file__).parents[3] / '.env'
 load_dotenv(dotenv_path=env_path)

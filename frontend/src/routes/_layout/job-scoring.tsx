@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { JobsService } from "../../client"
+import { JobsService, CandidatesService } from "../../client"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -31,7 +31,7 @@ import type { ApiError } from "@/client/core/ApiError"
 interface JobWithFiles {
   title: string
   description: string
-  files: { id: number; name: string }[]
+  files: { id: number; name: string; file?: File }[]
 }
 
 const JobScoring = () => {
@@ -41,7 +41,7 @@ const JobScoring = () => {
   // Input states
   const [inputTitle, setInputTitle] = useState("")
   const [inputDescription, setInputDescription] = useState("")
-  const [inputFiles, setInputFiles] = useState<{ id: number; name: string }[]>([])
+  const [inputFiles, setInputFiles] = useState<{ id: number; name: string; file?: File }[]>([])
   // Display states
   const [displayTitle, setDisplayTitle] = useState("")
   const [displayDescription, setDisplayDescription] = useState("")
@@ -68,17 +68,19 @@ const JobScoring = () => {
           if (Array.isArray(parsedFiles)) {
             const files = parsedFiles.map((file: string, index: number) => ({
               id: index + 1,
-              name: file
+              name: file,
+              file: file.endsWith('.pdf') ? new File([], file) : undefined
             }))
             setInputFiles(files)
-            setDisplayFiles(files)
+            setDisplayFiles(files.map(f => ({ id: f.id, name: f.name })))
           }
         } catch (e) {
           console.error("Error parsing files:", e)
           // If parsing fails, try to handle it as a single file name
           const file = {
             id: 1,
-            name: jobData.files
+            name: jobData.files,
+            file: jobData.files.endsWith('.pdf') ? new File([], jobData.files) : undefined
           }
           setInputFiles([file])
           setDisplayFiles([file])
@@ -148,7 +150,7 @@ const JobScoring = () => {
       setDisplayTitle(data.title)
       setDisplayDescription(data.description || "")
       setDisplayFiles(files)
-      setInputFiles(files)
+      setInputFiles(files.map(f => ({ ...f, file: f.name.endsWith('.pdf') ? new File([], f.name) : undefined })))
       setIsSaved(true)
 
       // If this was a new job, update the URL with the new job ID
@@ -175,6 +177,7 @@ const JobScoring = () => {
       const newFiles = Array.from(fileList).map((file, index) => ({
         id: inputFiles.length + index + 1,
         name: file.name,
+        file: file // Store the actual File object
       }))
       console.log('=== FILE UPLOAD: New files ===', newFiles)
       setInputFiles([...inputFiles, ...newFiles])
@@ -188,27 +191,55 @@ const JobScoring = () => {
     setInputFiles(updatedFiles)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!inputTitle.trim()) {
       showSuccessToast("Please enter a job title")
       return
     }
 
-    console.log('=== SAVE: Current input files ===', inputFiles)
-    const jobData: JobWithFiles = { 
-      title: inputTitle, 
-      description: inputDescription, 
-      files: inputFiles 
+    try {
+      // First, upload all files
+      const uploadedFiles = await Promise.all(
+        inputFiles.map(async (file) => {
+          if (file.file) {
+            // If we have the actual File object, use it
+            const response = await CandidatesService.saveCvCandidate({ file: file.file })
+            return {
+              id: file.id,
+              name: response.file_name
+            }
+          } else {
+            // If we only have the name, create a new File object
+            const fileObj = new File([new Blob()], file.name, { type: 'application/octet-stream' })
+            const response = await CandidatesService.saveCvCandidate({ file: fileObj })
+            return {
+              id: file.id,
+              name: response.file_name
+            }
+          }
+        })
+      )
+
+      console.log('=== SAVE: Uploaded files ===', uploadedFiles)
+      
+      const jobData: JobWithFiles = { 
+        title: inputTitle, 
+        description: inputDescription, 
+        files: uploadedFiles 
+      }
+      console.log('=== SAVE: Job data being sent ===', jobData)
+      mutation.mutate(jobData)
+    } catch (error) {
+      console.error('Error saving job:', error)
+      handleError(error as ApiError)
     }
-    console.log('=== SAVE: Job data being sent ===', jobData)
-    mutation.mutate(jobData)
   }
 
   const handleEdit = () => {
     console.log('=== EDIT: Current display files ===', displayFiles)
     setInputTitle(displayTitle)
     setInputDescription(displayDescription)
-    setInputFiles([...displayFiles])
+    setInputFiles([...displayFiles.map(f => ({ ...f, file: undefined } as { id: number; name: string; file?: File }))])
     setIsSaved(false)
   }
 

@@ -583,3 +583,27 @@ export class UtilsService {
     }
     
 }
+
+export class CandidatesService {
+    /**
+     * Save CV
+     * Save a CV file to the candidate upload directory.
+     * @param data The data for the request.
+     * @param data.file
+     * @returns SaveCVResponse Successful Response
+     * @throws ApiError
+     */
+    public static saveCvCandidate(data: { file: File }): CancelablePromise<{ file_name: string }> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/candidate/save-cv',
+            formData: {
+                file: data.file
+            },
+            mediaType: 'multipart/form-data',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+}

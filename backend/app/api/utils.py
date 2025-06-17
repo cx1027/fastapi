@@ -1,40 +1,50 @@
-import re
-from app.models import JobResponseSchema
-import json
+import logging
+from datetime import datetime
 
-def parse_response_to_schema(response_text: str) -> JobResponseSchema:
-    # Extract the JSON part from the response by finding content between curly braces
-    json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
-    print("json_match:", json_match)
-    
-    if json_match:
-        json_str = json_match.group(0)
-        print("Extracted JSON string:", json_str)  # Debug print
-        try:
-            data = json.loads(json_str)
-            print("Parsed JSON data:", data)  # Debug print, must contains "name"!!!
-            # Extract the parameters from the response
-            params = data.get('parameters', {})
-            print("params", params, "params.degree: ")
-            print(params.get('degree', []))
-            return JobResponseSchema(
-                degree=params.get('degree', []),
-                experience=params.get('experience', []),
-                technical_skill=params.get('technical_skill', []),
-                responsibility=params.get('responsibility', []),
-                certificate=params.get('certificate', []),
-                soft_skill=params.get('soft_skill', [])
-            )
-        except json.JSONDecodeError as e:
-            print("JSON decode error:", e)  # Debug print
-            pass
-    
-    # If JSON parsing fails, try to extract lists from the text
-    return JobResponseSchema(
-        degree=[],
-        experience=[],
-        technical_skill=[],
-        responsibility=[],
-        certificate=[],
-        soft_skill=[]
+import pytz
+from .config import settings
+
+
+def initial_logger():
+    # Create a logger instance
+    logger = logging.getLogger("app")
+
+    # Set the logging level
+    logger.setLevel(logging.DEBUG)
+
+    # Set the timezone to Vietnam
+    vietnam_timezone = pytz.timezone("Asia/Ho_Chi_Minh")
+
+    # Configure logging with the Vietnam timezone
+    logging.Formatter.converter = (
+        lambda *args: pytz.utc.localize(datetime.utcnow())
+        .astimezone(vietnam_timezone)
+        .timetuple()
     )
+
+    # Define the log format
+    console_log_format = "%(asctime)s - %(levelname)s - %(message)s"
+    file_log_format = (
+        "%(asctime)s - %(levelname)s - %(message)s - (%(filename)s:%(lineno)d)"
+    )
+
+    # Create a console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(
+        logging.Formatter(console_log_format, datefmt=settings.DATE_FMT)
+    )
+    logger.addHandler(console_handler)
+
+    # Create a file handler
+    file_handler = logging.FileHandler(filename=settings.LOG_DIR, encoding="utf-8")
+    file_handler.setLevel(logging.DEBUG)
+    file_handler.setFormatter(
+        logging.Formatter(file_log_format, datefmt=settings.DATE_FMT)
+    )
+    logger.addHandler(file_handler)
+
+    return logger
+
+
+LOGGER = initial_logger()

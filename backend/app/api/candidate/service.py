@@ -18,20 +18,28 @@ env_path = Path(__file__).parents[3] / '.env'
 load_dotenv(dotenv_path=env_path)
 
 async def save_cv_candidate(file):
-    # Prepend the current datetime to the filename
-    file_name = datetime.now().strftime("%Y%m%d%H%M%S-") + file.filename
+    try:
+        # Ensure the upload directory exists
+        os.makedirs(candidate_config.CV_UPLOAD_DIR, exist_ok=True)
 
-    # Construct the full image path based on the settings
-    image_path = candidate_config.CV_UPLOAD_DIR + file_name
+        # Prepend the current datetime to the filename
+        file_name = datetime.now().strftime("%Y%m%d%H%M%S-") + file.filename
 
-    # Read the contents of the uploaded file asynchronously
-    contents = await file.read()
+        # Construct the full file path
+        file_path = os.path.join(candidate_config.CV_UPLOAD_DIR, file_name)
 
-    # Write the uploaded contents to the specified image path
-    with open(image_path, "wb") as f:
-        f.write(contents)
+        # Read the contents of the uploaded file asynchronously
+        contents = await file.read()
 
-    return file_name
+        # Write the uploaded contents to the specified file path
+        with open(file_path, "wb") as f:
+            f.write(contents)
+
+        LOGGER.info(f"File saved successfully: {file_path}")
+        return file_name
+    except Exception as e:
+        LOGGER.error(f"Error saving file: {str(e)}")
+        raise
 
 
 def output2json(output):

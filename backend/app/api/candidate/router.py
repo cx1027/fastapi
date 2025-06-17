@@ -1,11 +1,11 @@
 from fastapi import APIRouter, File, UploadFile
-from src.candidate import service
+from candidate import service
 
 router = APIRouter()
 
 
 # @router.post("/analyse", response_model=ResponseSchema)
-@router.post("/analyse")
+@router.post("/analyse_candidate")
 async def analyse_candidate(file: UploadFile = File(...)):
     # if file.content_type != 'application/json':
     #     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Wow, That's not allowed")

@@ -64,7 +64,7 @@ def load_pdf_docx(file_path):
 
 
 def read_cv_candidate(file_name):
-    file_path = candidate_config.CV_UPLOAD_DIR + file_name
+    file_path = candidate_config.CV_UPLOAD_DIR + '/' + file_name
 
     documents = load_pdf_docx(file_path=file_path)
     content = ""
@@ -78,10 +78,11 @@ def analyse_candidate(cv_content):
     LOGGER.info("Start analyse candidate")
 
     llm = ChatOpenAI(
-        openai_api_base="https://api.groq.com/openai/v1",  # Groq endpoint
-        openai_api_key=os.getenv("GROQ_API_KEY"),
+        openai_api_base=os.getenv("GROQ_API_BASE"),
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
         model=candidate_config.MODEL_NAME,
-        temperature=0.5)
+        temperature=0.5
+        )
     completion = llm.predict_messages(
         [
             SystemMessage(content=system_prompt_candidate),

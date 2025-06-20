@@ -66,6 +66,15 @@ def create_job(
     session.add(job)
     session.commit()
     session.refresh(job)
+
+    # Run analysis and store result
+    analysis_result = service.analyse_job(job_data=job)
+    print("analysis_result\n", analysis_result)
+    import json
+    job.analysis_result = json.dumps(analysis_result)
+    session.add(job)
+    session.commit()
+    session.refresh(job)
     return job
 
 
@@ -87,6 +96,14 @@ def update_job(
         raise HTTPException(status_code=400, detail="Not enough permissions")
     update_dict = job_in.model_dump(exclude_unset=True)
     job.sqlmodel_update(update_dict)
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+
+    # Run analysis and store result
+    analysis_result = service.analyse_job(job_data=job)
+    import json
+    job.analysis_result = json.dumps(analysis_result)
     session.add(job)
     session.commit()
     session.refresh(job)

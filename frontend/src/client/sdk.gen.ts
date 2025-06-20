@@ -596,7 +596,7 @@ export class CandidatesService {
     public static saveCvCandidate(data: { file: File }): CancelablePromise<{ file_name: string }> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/v1/candidate/save-cv',
+            url: '/api/v1/candidate/analyse_candidate',
             formData: {
                 file: data.file
             },

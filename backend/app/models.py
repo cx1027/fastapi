@@ -121,6 +121,7 @@ class Job(JobBase, table=True):
     )
     owner: User | None = Relationship(back_populates="jobs")
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
+    analysis_result: str | None = Field(default=None, max_length=10000)  # New field for analysis result
 
 
 # Properties to return via API, id is always required
@@ -128,6 +129,7 @@ class JobPublic(JobBase):
     id: uuid.UUID
     owner_id: uuid.UUID
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
+    analysis_result: str | None = Field(default=None, max_length=10000)  # New field for analysis result
 
 
 class JobsPublic(SQLModel):

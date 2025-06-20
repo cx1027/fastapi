@@ -112,7 +112,7 @@ def delete_job(
     session.commit()
     return Message(message="Job deleted successfully")
 
-@router.post("/analyse", response_model=JobResponseSchema)
-async def analyse_job(job_data: JobAnalyzeRequest):
-    result = service.analyse_job(job_data=job_data)
-    return result
+# @router.post("/analyse", response_model=JobResponseSchema)
+# async def analyse_job(job_data: JobAnalyzeRequest):
+#     result = service.analyse_job(job_data=job_data)
+#     return result

@@ -167,7 +167,7 @@ class NewPassword(SQLModel):
 
 class JobAnalyzeRequest(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=1000)
+    description: str | None = Field(default=None, max_length=10000)
     id: uuid.UUID | None = None
     owner_id: uuid.UUID | None = None
     files: str | None = Field(default=None, max_length=1000)

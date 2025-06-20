@@ -23,8 +23,8 @@ from .service import save_cv_candidate, read_cv_candidate, analyse_candidate
 
 router = APIRouter()
 
-@router.post("/save-cv")
-async def save_cv(file: UploadFile = File(...)):
+@router.post("/analyse_candidate")
+async def analyse_candidate_cv(file: UploadFile = File(...)):
     """
     Save a CV file to the candidate upload directory.
     """

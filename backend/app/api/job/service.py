@@ -29,8 +29,6 @@ def analyse_job(job_data):
     llm = ChatOpenAI(
         openai_api_base=os.getenv("GROQ_API_BASE"),  # Groq endpoint
         openai_api_key=os.getenv("OPENAI_API_KEY"),
-        # openai_api_base="https://api.groq.com/openai/v1",  # Groq endpoint
-        # openai_api_key="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",
         model=job_config.MODEL_NAME,
         temperature=0.5
         )

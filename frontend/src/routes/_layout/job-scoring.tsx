@@ -92,8 +92,14 @@ const JobScoring = () => {
 
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
+      console.log('=== MUTATION: received data ===', data);
       // Send the complete file data including names
-      const filesData = JSON.stringify(data.files.map(f => f.name))
+      // const filesData = JSON.stringify(data.files.map(f => f.name))!!!update
+      const filesData = JSON.stringify(
+        data.files
+          .filter(f => f && f.name) // Only keep files that are not null/undefined and have a name
+          .map(f => f.name)
+      );
       console.log('=== MUTATION: Sending files data ===', filesData)
       
       if (jobId) {
@@ -229,6 +235,7 @@ const JobScoring = () => {
       }
       console.log('=== SAVE: Job data being sent ===', jobData)
       mutation.mutate(jobData)
+      console.log('=== mutation: mutation data being sent ===', jobData)
     } catch (error) {
       console.error('Error saving job:', error)
       handleError(error as ApiError)

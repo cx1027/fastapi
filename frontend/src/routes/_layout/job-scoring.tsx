@@ -210,9 +210,10 @@ const JobScoring = () => {
           if (file.file) {
             // If we have the actual File object, use it
             const response = await CandidatesService.saveCvCandidate({ file: file.file })
+            console.log('===response.file_name', response.file_name)
             return {
               id: file.id,
-              name: response.file_name
+              name: response.file_name || file.name || "unnamed_file"
             }
           } else {
             // If we only have the name, create a new File object

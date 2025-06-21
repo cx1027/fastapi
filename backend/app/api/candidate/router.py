@@ -36,6 +36,6 @@ async def analyse_candidate_cv(file: UploadFile = File(...)):
     print("cv_content\n")
 
     result = analyse_candidate(cv_content=cv_content)
-    print("result: ", result)
+    print("analyse_candidate result:\n", result)
 
     return result

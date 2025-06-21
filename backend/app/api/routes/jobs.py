@@ -68,8 +68,9 @@ def create_job(
     session.refresh(job)
 
     # Run analysis and store result
+    print("job data\n", job)
     analysis_result = service.analyse_job(job_data=job)
-    print("analysis_result\n", analysis_result)
+    print("job analysis_result\n", analysis_result)
     import json
     job.analysis_result = json.dumps(analysis_result)
     session.add(job)

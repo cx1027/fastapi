@@ -41,7 +41,7 @@ def analyse_job(job_data):
     )
     output_analysis = completion.additional_kwargs
     print("job_data.description:\n", job_data.description)
-    print("job_data output_analysis:\n", output_analysis)
+    # print("job_data output_analysis:\n", output_analysis)
     json_output = output2json(output_analysis)
     # print("Parsed JSON output:", json_output)
 

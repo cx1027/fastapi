@@ -208,26 +208,24 @@ const JobScoring = () => {
       const uploadedFiles = await Promise.all(
         inputFiles.map(async (file) => {
           if (file.file) {
-            // If we have the actual File object, use it
-            const response = await CandidatesService.saveCvCandidate({ file: file.file })
-            console.log('===response.file_name', response.file_name)
+            // If we have the actual File object, it's a new file to upload
+            const response = await CandidatesService.saveCvCandidate({
+              file: file.file,
+            })
             return {
               id: file.id,
-              name: response.file_name || file.name || "unnamed_file"
-            }
-          } else {
-            // If we only have the name, create a new File object
-            const fileObj = new File([new Blob()], file.name, { type: 'application/octet-stream' })
-            const response = await CandidatesService.saveCvCandidate({ file: fileObj })
-            return {
-              id: file.id,
-              name: response.file_name
+              name: response.file_name || file.name || "unnamed_file",
             }
           }
-        })
+          // If there's no file object, it's an existing file; just return its info
+          return {
+            id: file.id,
+            name: file.name,
+          }
+        }),
       )
 
-      console.log('=== SAVE: Uploaded files ===', uploadedFiles)
+      console.log("=== SAVE: Uploaded files ===", uploadedFiles)
       
       const jobData: JobWithFiles = { 
         title: inputTitle, 

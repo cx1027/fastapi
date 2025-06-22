@@ -606,4 +606,26 @@ export class CandidatesService {
             }
         });
     }
+
+    /**
+     * Get Candidate Analysis Result
+     * Retrieve analysis result for a specific file from the database.
+     * @param data The data for the request.
+     * @param data.fileName
+     * @returns CandidateAnalysisPublic Successful Response
+     * @throws ApiError
+     */
+    public static getCandidateAnalysisResult(data: { fileName: string }): CancelablePromise<any> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/candidate/analysis_result/{fileName}',
+            path: {
+                fileName: data.fileName
+            },
+            errors: {
+                422: 'Validation Error',
+                404: 'Analysis result not found for this file'
+            }
+        });
+    }
 }

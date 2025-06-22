@@ -10,6 +10,7 @@ import {
   Table,
   Text,
   Box,
+  Badge,
 } from "@chakra-ui/react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -34,6 +35,10 @@ interface JobWithFiles {
   files: { id: number; name: string; file?: File }[]
 }
 
+interface AnalysisResult {
+  [key: string]: any
+}
+
 const JobScoring = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -47,6 +52,14 @@ const JobScoring = () => {
   const [displayDescription, setDisplayDescription] = useState("")
   const [displayFiles, setDisplayFiles] = useState<{ id: number; name: string }[]>([])
   const [isSaved, setIsSaved] = useState(false)
+  // Popup states
+  const [isJobDetailsOpen, setIsJobDetailsOpen] = useState(false)
+  const [isFileDetailsOpen, setIsFileDetailsOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<{ id: number; name: string } | null>(null)
+  const [jobAnalysisResult, setJobAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [fileAnalysisResult, setFileAnalysisResult] = useState<AnalysisResult | null>(null)
+  const [isLoadingJobAnalysis, setIsLoadingJobAnalysis] = useState(false)
+  const [isLoadingFileAnalysis, setIsLoadingFileAnalysis] = useState(false)
   const { showSuccessToast } = useCustomToast()
 
   const { data: jobData } = useQuery({
@@ -249,6 +262,118 @@ const JobScoring = () => {
     setIsSaved(false)
   }
 
+  // Function to fetch job analysis result
+  const fetchJobAnalysis = async () => {
+    if (!jobId) return
+    
+    setIsLoadingJobAnalysis(true)
+    try {
+      const job = await JobsService.readJob({ id: jobId })
+      // Use type assertion since analysis_result exists in backend but not in generated types
+      const jobWithAnalysis = job as any
+      if (jobWithAnalysis.analysis_result) {
+        const analysis = JSON.parse(jobWithAnalysis.analysis_result)
+        setJobAnalysisResult(analysis)
+      }
+    } catch (error) {
+      console.error('Error fetching job analysis:', error)
+      handleError(error as ApiError)
+    } finally {
+      setIsLoadingJobAnalysis(false)
+    }
+  }
+
+  // Function to fetch file analysis result
+  const fetchFileAnalysis = async (fileName: string) => {
+    setIsLoadingFileAnalysis(true)
+    try {
+      // Try to fetch analysis result from the database
+      const response = await CandidatesService.getCandidateAnalysisResult({ fileName })
+      if (response && response.analysis_result) {
+        const analysis = JSON.parse(response.analysis_result)
+        setFileAnalysisResult(analysis)
+      } else {
+        setFileAnalysisResult({
+          message: "Analysis result not available for this file",
+          note: "The analysis result could not be retrieved from the database.",
+          fileName: fileName
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching file analysis:', error)
+      // Show user-friendly message if analysis result not found
+      setFileAnalysisResult({
+        message: "Analysis result not available for this file",
+        note: "This file may not have been analyzed yet or the analysis result is not stored in the database.",
+        fileName: fileName
+      })
+    } finally {
+      setIsLoadingFileAnalysis(false)
+    }
+  }
+
+  // Function to handle job details button click
+  const handleJobDetailsClick = () => {
+    fetchJobAnalysis()
+    setIsJobDetailsOpen(true)
+  }
+
+  // Function to handle file details button click
+  const handleFileDetailsClick = (file: { id: number; name: string }) => {
+    setSelectedFile(file)
+    fetchFileAnalysis(file.name)
+    setIsFileDetailsOpen(true)
+  }
+
+  // Function to render analysis result as formatted text
+  const renderAnalysisResult = (result: AnalysisResult | null) => {
+    if (!result) return <Text>No analysis result available</Text>
+    
+    // Special case for file analysis message
+    if (result.message && result.message.includes("not available")) {
+      return (
+        <VStack align="stretch" gap={3}>
+          <Box p={3} borderWidth="1px" borderRadius="md" bg="orange.50" borderColor="orange.200">
+            <Text fontWeight="bold" color="orange.800" mb={2}>
+              {result.message}
+            </Text>
+            <Text color="orange.700" fontSize="sm">
+              {result.note}
+            </Text>
+            <Text color="gray.600" fontSize="sm" mt={2}>
+              File: {result.fileName}
+            </Text>
+          </Box>
+        </VStack>
+      )
+    }
+    
+    return (
+      <VStack align="stretch" gap={3}>
+        {Object.entries(result).map(([key, value]) => (
+          <Box key={key} p={3} borderWidth="1px" borderRadius="md">
+            <Text fontWeight="bold" mb={2} textTransform="capitalize">
+              {key.replace(/_/g, ' ')}
+            </Text>
+            {Array.isArray(value) ? (
+              <VStack align="start" gap={1}>
+                {value.map((item, index) => (
+                  <Badge key={index} colorScheme="blue" variant="subtle">
+                    {item}
+                  </Badge>
+                ))}
+              </VStack>
+            ) : typeof value === 'object' ? (
+              <Text>{JSON.stringify(value, null, 2)}</Text>
+            ) : (
+              <Text>{String(value)}</Text>
+            )}
+          </Box>
+        ))}
+      </VStack>
+    )
+  }
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
@@ -328,8 +453,18 @@ const JobScoring = () => {
               <VStack align="stretch" mt={4}>
                 <Heading size="md">Job Details</Heading>
                 <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                  <Text fontWeight="bold">{displayTitle}</Text>
-                  <Text>{displayDescription}</Text>
+                  <VStack align="start" gap={3}>
+                    <Text fontWeight="bold">{displayTitle}</Text>
+                    <Text>{displayDescription}</Text>
+                    <Button 
+                      size="sm" 
+                      colorScheme="blue"
+                      onClick={handleJobDetailsClick}
+                      loading={isLoadingJobAnalysis}
+                    >
+                      Details
+                    </Button>
+                  </VStack>
                 </Box>
               </VStack>
             </VStack>
@@ -342,6 +477,7 @@ const JobScoring = () => {
                     <Table.Row>
                       <Table.ColumnHeader>ID</Table.ColumnHeader>
                       <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                      <Table.ColumnHeader>Actions</Table.ColumnHeader>
                     </Table.Row>
                   </Table.Header>
                   <Table.Body>
@@ -349,6 +485,16 @@ const JobScoring = () => {
                       <Table.Row key={file.id}>
                         <Table.Cell>{file.id}</Table.Cell>
                         <Table.Cell>{file.name}</Table.Cell>
+                        <Table.Cell>
+                          <Button 
+                            size="sm" 
+                            colorScheme="blue"
+                            onClick={() => handleFileDetailsClick(file)}
+                            loading={isLoadingFileAnalysis && selectedFile?.id === file.id}
+                          >
+                            Details
+                          </Button>
+                        </Table.Cell>
                       </Table.Row>
                     ))}
                   </Table.Body>
@@ -368,6 +514,54 @@ const JobScoring = () => {
             Save
           </Button>
         )}
+
+        {/* Job Analysis Details Popup */}
+        <DialogRoot open={isJobDetailsOpen} onOpenChange={({ open }) => setIsJobDetailsOpen(open)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Job Analysis Details</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              {isLoadingJobAnalysis ? (
+                <Text>Loading analysis results...</Text>
+              ) : (
+                renderAnalysisResult(jobAnalysisResult)
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <DialogActionTrigger asChild>
+                <Button variant="subtle" colorPalette="gray">
+                  Close
+                </Button>
+              </DialogActionTrigger>
+            </DialogFooter>
+            <DialogCloseTrigger />
+          </DialogContent>
+        </DialogRoot>
+
+        {/* File Analysis Details Popup */}
+        <DialogRoot open={isFileDetailsOpen} onOpenChange={({ open }) => setIsFileDetailsOpen(open)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>File Analysis Details - {selectedFile?.name}</DialogTitle>
+            </DialogHeader>
+            <DialogBody>
+              {isLoadingFileAnalysis ? (
+                <Text>Loading analysis results...</Text>
+              ) : (
+                renderAnalysisResult(fileAnalysisResult)
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <DialogActionTrigger asChild>
+                <Button variant="subtle" colorPalette="gray">
+                  Close
+                </Button>
+              </DialogActionTrigger>
+            </DialogFooter>
+            <DialogCloseTrigger />
+          </DialogContent>
+        </DialogRoot>
       </VStack>
     </Container>
   )

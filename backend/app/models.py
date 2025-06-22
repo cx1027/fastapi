@@ -1,4 +1,5 @@
 import uuid
+from datetime import datetime
 
 from pydantic import EmailStr
 from sqlmodel import Field, Relationship, SQLModel
@@ -124,6 +125,16 @@ class Job(JobBase, table=True):
     analysis_result: str | None = Field(default=None, max_length=10000)  # New field for analysis result
 
 
+# Database model for candidate analysis results
+class CandidateAnalysis(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    file_name: str = Field(max_length=255, unique=True, index=True)  # Timestamped filename
+    original_file_name: str | None = Field(default=None, max_length=255, index=True)  # Original filename
+    analysis_result: str = Field(max_length=10000)  # JSON string of analysis result
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # Properties to return via API, id is always required
 class JobPublic(JobBase):
     id: uuid.UUID
@@ -135,6 +146,16 @@ class JobPublic(JobBase):
 class JobsPublic(SQLModel):
     data: list[JobPublic]
     count: int
+
+
+# Properties to return via API for candidate analysis
+class CandidateAnalysisPublic(SQLModel):
+    id: uuid.UUID
+    file_name: str
+    original_file_name: str | None
+    analysis_result: str
+    created_at: datetime
+    updated_at: datetime
 
 
 class JobResponseSchema(SQLModel):

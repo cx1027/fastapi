@@ -60,6 +60,7 @@ const JobScoring = () => {
   const [fileAnalysisResult, setFileAnalysisResult] = useState<AnalysisResult | null>(null)
   const [isLoadingJobAnalysis, setIsLoadingJobAnalysis] = useState(false)
   const [isLoadingFileAnalysis, setIsLoadingFileAnalysis] = useState(false)
+  const [analysisRun, setAnalysisRun] = useState(false)
   const [analysisScoreResult, setAnalysisScoreResult] = useState<AnalysisResult | null>(null)
   const [isAnalysisDetailsOpen, setIsAnalysisDetailsOpen] = useState(false)
   const { showSuccessToast } = useCustomToast()
@@ -143,7 +144,7 @@ const JobScoring = () => {
     },
     onSuccess: (data) => {
       setAnalysisScoreResult(data as AnalysisResult)
-      setIsAnalysisDetailsOpen(true)
+      setAnalysisRun(true)
       showSuccessToast("Analysis run successfully.")
       queryClient.invalidateQueries({ queryKey: ["job", jobId] })
     },
@@ -239,7 +240,7 @@ const JobScoring = () => {
     },
     onError: (error: ApiError) => {
       console.error("=== MUTATION: Error ===", error)
-      handleError(error)
+      handleError(error as ApiError)
     },
   })
 
@@ -270,40 +271,34 @@ const JobScoring = () => {
     }
 
     try {
-      // First, upload all files
-      const uploadedFiles = await Promise.all(
-        inputFiles.map(async (file) => {
+      // Upload new files and get their names
+      const uploadedFileTasks = inputFiles
+        .filter((file) => file.file)
+        .map(async (file) => {
           if (file.file) {
-            // If we have the actual File object, it's a new file to upload
             const response = await CandidateService.analyseCandidateCv({
               formData: { file: file.file },
             })
-            // The actual filename is in response.file_name, but the API spec says `unknown` return.
-            // Assuming the actual API returns a filename. If not, this needs adjustment.
             const fileName = (response as any)?.file_name || file.name
-            return {
-              id: file.id,
-              name: fileName,
-            }
+            return { id: file.id, name: fileName }
           }
-          // If there's no file object, it's an existing file; just return its info
-          return {
-            id: file.id,
-            name: file.name,
-          }
-        }),
-      )
+          return file
+        })
+      const uploadedFiles = await Promise.all(uploadedFileTasks)
 
-      console.log("=== SAVE: Uploaded files ===", uploadedFiles)
+      // Get list of files that were already on the server
+      const existingFiles = inputFiles
+        .filter((file) => !file.file)
+        .map((f) => ({ id: f.id, name: f.name }))
 
+      // Combine and pass to mutation
+      const allFiles = [...existingFiles, ...uploadedFiles]
       const jobData: JobWithFiles = {
         title: inputTitle,
         description: inputDescription,
-        files: uploadedFiles,
+        files: allFiles,
       }
-      console.log("=== SAVE: Job data being sent ===", jobData)
       mutation.mutate(jobData)
-      console.log("=== mutation: mutation data being sent ===", jobData)
     } catch (error) {
       console.error("Error saving job:", error)
       handleError(error as ApiError)
@@ -325,6 +320,8 @@ const JobScoring = () => {
       ),
     ])
     setIsSaved(false)
+    setAnalysisRun(false)
+    setAnalysisScoreResult(null)
   }
 
   // Function to fetch job analysis result
@@ -608,16 +605,17 @@ const JobScoring = () => {
                           >
                             Details
                           </Button>
-                          <Button
-                            size="sm"
-                            colorScheme="teal"
-                            onClick={() => {
-                              // Maybe open a specific analysis view or pass file-specific data
-                              setIsAnalysisDetailsOpen(true)
-                            }}
-                          >
-                            Score
-                          </Button>
+                          {analysisRun && (
+                            <Button
+                              size="sm"
+                              colorScheme="teal"
+                              onClick={() => {
+                                setIsAnalysisDetailsOpen(true)
+                              }}
+                            >
+                              Score
+                            </Button>
+                          )}
                         </HStack>
                       </Table.Cell>
                     </Table.Row>

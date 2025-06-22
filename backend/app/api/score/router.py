@@ -11,7 +11,7 @@ router = APIRouter(prefix="/score", tags=["score"])
 
 # @router.post("/analyse", response_model=ResponseSchema)
 @router.post("/score_analyse")
-async def analyse_score(score_data: ScoreSchema):
-    result = service.analyse_score(score_data=score_data)
+async def analyse_score(job_candidate_data: ScoreSchema):
+    result = service.analyse_score(job_candidate_data=job_candidate_data)
 
     return result

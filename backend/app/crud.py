@@ -4,7 +4,7 @@ from typing import Any
 from sqlmodel import Session, select
 
 from app.core.security import get_password_hash, verify_password
-from app.models import Item, ItemCreate, User, UserCreate, UserUpdate
+from app.models import Item, ItemCreate, User, UserCreate, UserUpdate, Job, JobUpdate
 
 
 def create_user(*, session: Session, user_create: UserCreate) -> User:
@@ -29,6 +29,15 @@ def update_user(*, session: Session, db_user: User, user_in: UserUpdate) -> Any:
     session.commit()
     session.refresh(db_user)
     return db_user
+
+
+def update_job(*, session: Session, db_job: Job, job_in: JobUpdate) -> Any:
+    job_data = job_in.model_dump(exclude_unset=True)
+    db_job.sqlmodel_update(job_data)
+    session.add(db_job)
+    session.commit()
+    session.refresh(db_job)
+    return db_job
 
 
 def get_user_by_email(*, session: Session, email: str) -> User | None:

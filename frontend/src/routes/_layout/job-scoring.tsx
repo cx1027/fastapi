@@ -469,8 +469,17 @@ const JobScoring = () => {
                   </Badge>
                 ))}
               </VStack>
-            ) : typeof value === "object" ? (
-              <Text>{JSON.stringify(value, null, 2)}</Text>
+            ) : typeof value === "object" && value !== null ? (
+              "score" in value && "comment" in value ? (
+                <VStack align="start" gap={1}>
+                  <Text>score: {value.score}</Text>
+                  <Text>comment: {value.comment}</Text>
+                </VStack>
+              ) : (
+                <Text as="pre" whiteSpace="pre-wrap">
+                  {JSON.stringify(value, null, 2)}
+                </Text>
+              )
             ) : (
               <Text>{String(value)}</Text>
             )}

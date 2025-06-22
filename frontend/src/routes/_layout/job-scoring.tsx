@@ -61,7 +61,7 @@ const JobScoring = () => {
   const [isLoadingJobAnalysis, setIsLoadingJobAnalysis] = useState(false)
   const [isLoadingFileAnalysis, setIsLoadingFileAnalysis] = useState(false)
   const [analysisRun, setAnalysisRun] = useState(false)
-  const [analysisScoreResult, setAnalysisScoreResult] = useState<AnalysisResult | null>(null)
+  const [analysisScoreResult, setAnalysisScoreResult] = useState<Record<string, AnalysisResult>>({})
   const [isAnalysisDetailsOpen, setIsAnalysisDetailsOpen] = useState(false)
   const { showSuccessToast } = useCustomToast()
 
@@ -127,47 +127,49 @@ const JobScoring = () => {
         throw new Error("Job data or files not available for analysis.")
       }
 
-      // Fetch analysis for all candidate files
-      const candidateAnalyses = await Promise.all(
-        displayFiles.map((file) =>
-          CandidateService.getCandidateAnalysisResult({ fileName: file.name }),
-        ),
-      )
+      const scoreResults = await Promise.all(
+        displayFiles.map(async (file) => {
+          try {
+            const candidateAnalysis = await CandidateService.getCandidateAnalysisResult({ fileName: file.name });
+            if (candidateAnalysis && candidateAnalysis.analysis_result) {
+              const candidateData = JSON.parse(candidateAnalysis.analysis_result);
+              const scoreData = {
+                job: {
+                  id: jobData.id,
+                  title: jobData.title,
+                  description: jobData.description,
+                },
+                candidate: candidateData,
+              };
+              const scoreResult = await ScoreService.analyseScore({ requestBody: scoreData });
+              return { fileName: file.name, score: scoreResult };
+            }
+          } catch (error) {
+            console.error(`Failed to analyze score for ${file.name}`, error);
+          }
+          return { fileName: file.name, score: null };
+        })
+      );
 
-      // Assuming we analyze with the first candidate for now, as the backend endpoint seems to take one.
-      // This could be extended to loop or batch if the backend supports it.
-      if (candidateAnalyses.length > 0 && candidateAnalyses[0].analysis_result) {
-        const candidateData = JSON.parse(candidateAnalyses[0].analysis_result)
-
-        const scoreData = {
-          job: {
-            id: jobData.id,
-            title: jobData.title,
-            description: jobData.description,
-          },
-          candidate: candidateData,
-        }
-
-        return ScoreService.analyseScore({ requestBody: scoreData })
-      } else {
-        throw new Error(
-          "No candidate analysis result found for the first candidate.",
-        )
-      }
+      return scoreResults.filter(result => result.score) as {fileName: string, score: AnalysisResult}[];
     },
     onSuccess: (data) => {
-      setAnalysisScoreResult(data as AnalysisResult)
-      setAnalysisRun(true)
-      showSuccessToast("Analysis run successfully.")
-      queryClient.invalidateQueries({ queryKey: ["job", jobId] })
+      const newScoreResults = data.reduce((acc, result) => {
+        acc[result.fileName] = result.score;
+        return acc;
+      }, {} as Record<string, AnalysisResult>);
+
+      setAnalysisScoreResult(newScoreResults);
+      setAnalysisRun(true);
+      showSuccessToast("Analysis run successfully for all candidates.");
     },
     onError: (error: ApiError) => {
-      handleError(error)
+      handleError(error as any)
     },
   })
 
   const saveAnalysisMutation = useMutation({
-    mutationFn: (analysisResult: AnalysisResult) => {
+    mutationFn: (analysisResult: Record<string, AnalysisResult>) => {
       if (!jobId) {
         throw new Error("Job ID not found")
       }
@@ -357,7 +359,7 @@ const JobScoring = () => {
     ])
     setIsSaved(false)
     setAnalysisRun(false)
-    setAnalysisScoreResult(null)
+    setAnalysisScoreResult({})
   }
 
   // Function to fetch job analysis result
@@ -508,7 +510,7 @@ const JobScoring = () => {
                 >
                   Run Analysis
                 </Button>
-                {analysisRun && analysisScoreResult && (
+                {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
                   <Button
                     colorScheme="purple"
                     onClick={() => saveAnalysisMutation.mutate(analysisScoreResult)}
@@ -659,11 +661,12 @@ const JobScoring = () => {
                           >
                             Details
                           </Button>
-                          {analysisRun && (
+                          {analysisRun && analysisScoreResult[file.name] && (
                             <Button
                               size="sm"
                               colorScheme="teal"
                               onClick={() => {
+                                setSelectedFile(file)
                                 setIsAnalysisDetailsOpen(true)
                               }}
                             >
@@ -747,9 +750,9 @@ const JobScoring = () => {
             </DialogHeader>
             <DialogBody>
               {runAnalysisMutation.isPending ? (
-                <Text>Loading analysis results...</Text>
+                <Text>Running analysis for all candidates...</Text>
               ) : (
-                renderAnalysisResult(analysisScoreResult)
+                renderAnalysisResult(selectedFile ? analysisScoreResult[selectedFile.name] : null)
               )}
             </DialogBody>
             <DialogFooter>

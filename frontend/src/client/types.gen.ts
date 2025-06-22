@@ -89,6 +89,7 @@ export type JobUpdate = {
   title?: string | null
   description?: string | null
   files?: string | null
+  analysis_result?: string | null
 }
 
 export type Message = {

@@ -153,6 +153,29 @@ const JobScoring = () => {
     },
   })
 
+  const saveAnalysisMutation = useMutation({
+    mutationFn: (analysisResult: AnalysisResult) => {
+      if (!jobId) {
+        throw new Error("Job ID not found")
+      }
+      return JobsService.updateJob({
+        id: jobId,
+        requestBody: {
+          analysis_result: JSON.stringify(analysisResult),
+        },
+      })
+    },
+    onSuccess: () => {
+      showSuccessToast("Analysis saved successfully.")
+      queryClient.invalidateQueries({ queryKey: ["job", jobId] })
+      queryClient.invalidateQueries({ queryKey: ["jobs"] })
+      setIsAnalysisDetailsOpen(false) // Close the popup
+    },
+    onError: (error: ApiError) => {
+      handleError(error)
+    },
+  })
+
   const mutation = useMutation({
     mutationFn: (data: JobWithFiles) => {
       console.log("=== MUTATION: received data ===", data)
@@ -463,6 +486,15 @@ const JobScoring = () => {
                 >
                   Run Analysis
                 </Button>
+                {analysisRun && analysisScoreResult && (
+                  <Button
+                    colorScheme="purple"
+                    onClick={() => saveAnalysisMutation.mutate(analysisScoreResult)}
+                    loading={saveAnalysisMutation.isPending}
+                  >
+                    Save Analysis
+                  </Button>
+                )}
               </>
             ) : (
               <Button
@@ -593,7 +625,7 @@ const JobScoring = () => {
                       <Table.Cell>{file.id}</Table.Cell>
                       <Table.Cell>{file.name}</Table.Cell>
                       <Table.Cell>
-                        <HStack gap={2}>
+                        <HStack>
                           <Button
                             size="sm"
                             colorScheme="blue"

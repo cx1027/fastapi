@@ -10,10 +10,6 @@ from langchain_openai import ChatOpenAI
 from .config import score_config
 from .prompts import fn_matching_analysis, system_prompt_matching
 from app.api.utils import LOGGER
-from app.models import Job, JobUpdate
-from app.crud import update_job
-from sqlmodel import Session
-from app.api.deps import get_db
 
 env_path = Path(__file__).parents[3] / '.env'
 load_dotenv(dotenv_path=env_path)
@@ -22,8 +18,7 @@ load_dotenv(dotenv_path=env_path)
 def output2json(output):
     """GPT Output Object >>> json"""
     opts = jsbeautifier.default_options()
-    # return json.loads(jsbeautifier.beautify(output["function_call"][0]["arguments"], opts))
-    return json.loads(jsbeautifier.beautify(output["tool_calls"][0]["function"]["arguments"], opts)) 
+    return json.loads(jsbeautifier.beautify(output["tool_calls"][0]["function"]["arguments"], opts))
 
 
 def generate_content(job, candidate):
@@ -31,7 +26,7 @@ def generate_content(job, candidate):
     return content
 
 
-def analyse_score(job_candidate_data, session: Session = next(get_db())):
+def analyse_score(job_candidate_data):
     start = time.time()
     LOGGER.info("Start analyse matching")
 
@@ -74,14 +69,6 @@ def analyse_score(job_candidate_data, session: Session = next(get_db())):
     final_score = weighted_score / total_weight
 
     json_output["score"] = final_score
-
-    # Save the analysis result to the database
-    job_id = job_candidate_data.job.get("id")
-    if job_id:
-        db_job = session.get(Job, job_id)
-        if db_job:
-            job_in = JobUpdate(analysis_result=json.dumps(json_output))
-            update_job(session=session, db_job=db_job, job_in=job_in)
 
     LOGGER.info("Done analyse matching")
     LOGGER.info(f"Time analyse matching: {time.time() - start}")

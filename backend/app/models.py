@@ -112,6 +112,7 @@ class JobUpdate(JobBase):
     title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
     description: str | None = Field(default=None, max_length=1000)  # type: ignore
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
+    analysis_result: str | None = Field(default=None, max_length=10000)  # type: ignore
 
 
 # Database model, database table inferred from class name

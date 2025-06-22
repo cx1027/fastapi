@@ -104,6 +104,19 @@ const JobScoring = () => {
           setDisplayFiles([file])
         }
       }
+
+      // If there's a saved analysis result, load it
+      const jobWithAnalysis = jobData as any // To access analysis_result easily
+      if (jobWithAnalysis.analysis_result) {
+        try {
+          const savedAnalysis = JSON.parse(jobWithAnalysis.analysis_result)
+          setAnalysisScoreResult(savedAnalysis)
+          setAnalysisRun(true) // This will show the 'Score' and 'Save Analysis' buttons
+        } catch (e) {
+          console.error("Error parsing saved analysis result:", e)
+        }
+      }
+      
       setIsSaved(true)
     }
   }, [jobData])

@@ -377,115 +377,120 @@ const JobScoring = () => {
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
+        {/* Header with Title and All Buttons */}
         <HStack justify="space-between">
           <Heading size="lg">Job Scoring</Heading>
-          {isSaved && (
-            <Button colorScheme="blue" onClick={handleEdit}>
-              Edit
-            </Button>
-          )}
+          <HStack gap={2}>
+            {isSaved ? (
+              <Button colorScheme="blue" onClick={handleEdit}>
+                Edit
+              </Button>
+            ) : (
+              <Button
+                colorScheme="blue"
+                onClick={handleSave}
+                loading={mutation.isPending}
+              >
+                Save
+              </Button>
+            )}
+          </HStack>
         </HStack>
 
-        {!isSaved ? (
-          // Input Form
-          <HStack align="start" gap={8}>
-            <VStack align="stretch" flex={1}>
-              <VStack align="stretch" mt={4}>
-                <Heading size="md">Job Details</Heading>
-                <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                  <VStack gap={4}>
-                    <Input
-                      placeholder="Enter job title"
-                      value={inputTitle}
-                      onChange={(e) => setInputTitle(e.target.value)}
-                    />
-                    <Textarea
-                      placeholder="Enter job description"
-                      value={inputDescription}
-                      onChange={(e) => setInputDescription(e.target.value)}
-                    />
-                  </VStack>
-                </Box>
+        {/* Job Details Section */}
+        <VStack align="stretch">
+          <Heading size="md">Job Details</Heading>
+          {!isSaved ? (
+            // Input Form for Job Details
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+              <VStack gap={4}>
+                <Input
+                  placeholder="Enter job title"
+                  value={inputTitle}
+                  onChange={(e) => setInputTitle(e.target.value)}
+                />
+                <Textarea
+                  placeholder="Enter job description"
+                  value={inputDescription}
+                  onChange={(e) => setInputDescription(e.target.value)}
+                />
               </VStack>
-            </VStack>
+            </Box>
+          ) : (
+            // Display View for Job Details
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+              <VStack align="start" gap={3}>
+                <Text fontWeight="bold">{displayTitle}</Text>
+                <Text>{displayDescription}</Text>
+                <Button 
+                  size="sm" 
+                  colorScheme="blue"
+                  onClick={handleJobDetailsClick}
+                  loading={isLoadingJobAnalysis}
+                >
+                  Details
+                </Button>
+              </VStack>
+            </Box>
+          )}
+        </VStack>
 
-            <VStack align="stretch" flex={1}>
-              <Heading size="md">Files</Heading>
-              <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                <VStack gap={4}>
-                  <Input type="file" onChange={handleFileUpload} multiple />
-                  {inputFiles.length > 0 && (
-                    <Table.Root>
-                      <Table.Header>
-                        <Table.Row>
-                          <Table.ColumnHeader>ID</Table.ColumnHeader>
-                          <Table.ColumnHeader>File Name</Table.ColumnHeader>
-                          <Table.ColumnHeader>Actions</Table.ColumnHeader>
+        {/* Files Section */}
+        <VStack align="stretch">
+          <Heading size="md">Files</Heading>
+          {!isSaved ? (
+            // Input Form for Files
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+              <VStack gap={4}>
+                <Input type="file" onChange={handleFileUpload} multiple />
+                {inputFiles.length > 0 && (
+                  <Table.Root>
+                    <Table.Header>
+                      <Table.Row>
+                        <Table.ColumnHeader>ID</Table.ColumnHeader>
+                        <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                        <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                      </Table.Row>
+                    </Table.Header>
+                    <Table.Body>
+                      {inputFiles.map((file) => (
+                        <Table.Row key={file.id}>
+                          <Table.Cell>{file.id}</Table.Cell>
+                          <Table.Cell>{file.name}</Table.Cell>
+                          <Table.Cell>
+                            <Button 
+                              size="sm" 
+                              colorScheme="red"
+                              onClick={() => handleDeleteFile(file.id)}
+                            >
+                              Delete
+                            </Button>
+                          </Table.Cell>
                         </Table.Row>
-                      </Table.Header>
-                      <Table.Body>
-                        {inputFiles.map((file) => (
-                          <Table.Row key={file.id}>
-                            <Table.Cell>{file.id}</Table.Cell>
-                            <Table.Cell>{file.name}</Table.Cell>
-                            <Table.Cell>
-                              <Button 
-                                size="sm" 
-                                colorScheme="red"
-                                onClick={() => handleDeleteFile(file.id)}
-                              >
-                                Delete
-                              </Button>
-                            </Table.Cell>
-                          </Table.Row>
-                        ))}
-                      </Table.Body>
-                    </Table.Root>
-                  )}
-                </VStack>
-              </Box>
-            </VStack>
-          </HStack>
-        ) : (
-          // Display View
-          <HStack align="start" gap={8}>
-            <VStack align="stretch" flex={1}>
-              <VStack align="stretch" mt={4}>
-                <Heading size="md">Job Details</Heading>
-                <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                  <VStack align="start" gap={3}>
-                    <Text fontWeight="bold">{displayTitle}</Text>
-                    <Text>{displayDescription}</Text>
-                    <Button 
-                      size="sm" 
-                      colorScheme="blue"
-                      onClick={handleJobDetailsClick}
-                      loading={isLoadingJobAnalysis}
-                    >
-                      Details
-                    </Button>
-                  </VStack>
-                </Box>
+                      ))}
+                    </Table.Body>
+                  </Table.Root>
+                )}
               </VStack>
-            </VStack>
-
-            <VStack align="stretch" flex={1}>
-              <Heading size="md">Files</Heading>
-              <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
-                <Table.Root>
-                  <Table.Header>
-                    <Table.Row>
-                      <Table.ColumnHeader>ID</Table.ColumnHeader>
-                      <Table.ColumnHeader>File Name</Table.ColumnHeader>
-                      <Table.ColumnHeader>Actions</Table.ColumnHeader>
-                    </Table.Row>
-                  </Table.Header>
-                  <Table.Body>
-                    {displayFiles.map((file) => (
-                      <Table.Row key={file.id}>
-                        <Table.Cell>{file.id}</Table.Cell>
-                        <Table.Cell>{file.name}</Table.Cell>
-                        <Table.Cell>
+            </Box>
+          ) : (
+            // Display View for Files
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
+              <Table.Root>
+                <Table.Header>
+                  <Table.Row>
+                    <Table.ColumnHeader>ID</Table.ColumnHeader>
+                    <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                    <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                  </Table.Row>
+                </Table.Header>
+                <Table.Body>
+                  {displayFiles.map((file) => (
+                    <Table.Row key={file.id}>
+                      <Table.Cell>{file.id}</Table.Cell>
+                      <Table.Cell>{file.name}</Table.Cell>
+                      <Table.Cell>
+                        <HStack gap={2}>
                           <Button 
                             size="sm" 
                             colorScheme="blue"
@@ -494,26 +499,15 @@ const JobScoring = () => {
                           >
                             Details
                           </Button>
-                        </Table.Cell>
-                      </Table.Row>
-                    ))}
-                  </Table.Body>
-                </Table.Root>
-              </Box>
-            </VStack>
-          </HStack>
-        )}
-
-        {!isSaved && (
-          <Button
-            colorScheme="blue"
-            onClick={handleSave}
-            loading={mutation.isPending}
-            alignSelf="flex-end"
-          >
-            Save
-          </Button>
-        )}
+                        </HStack>
+                      </Table.Cell>
+                    </Table.Row>
+                  ))}
+                </Table.Body>
+              </Table.Root>
+            </Box>
+          )}
+        </VStack>
 
         {/* Job Analysis Details Popup */}
         <DialogRoot open={isJobDetailsOpen} onOpenChange={({ open }) => setIsJobDetailsOpen(open)}>

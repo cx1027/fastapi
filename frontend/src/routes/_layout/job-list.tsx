@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useState, useEffect } from "react"
 import {
   Container,
   Heading,
@@ -6,21 +6,24 @@ import {
   VStack,
   Text,
   Flex,
+  Button,
 } from "@chakra-ui/react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
-import { FiSearch } from "react-icons/fi"
+import { FiTrash, FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
 import { JobsService } from "../../client"
 import JobActionsMenu from "../../components/Common/JobActionsMenu"
 import PendingJobs from "../../components/Pending/PendingJobs"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   PaginationItems,
   PaginationNextTrigger,
   PaginationPrevTrigger,
   PaginationRoot,
 } from "../../components/ui/pagination"
+import useCustomToast from "@/hooks/useCustomToast"
 
 const PER_PAGE = 5
 
@@ -47,6 +50,9 @@ function JobList() {
   const navigate = useNavigate()
   const { page } = Route.useSearch()
   const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
+  const [selectedJobs, setSelectedJobs] = useState<string[]>([])
+  const queryClient = useQueryClient()
+  const { showSuccessToast, showErrorToast } = useCustomToast()
 
   const handlePageChange = (details: { page: number }) => {
     navigate({
@@ -54,10 +60,58 @@ function JobList() {
     })
   }
 
+  const deleteMutation = useMutation({
+    mutationFn: async (jobIds: string[]) => {
+      await Promise.all(
+        jobIds.map((jobId) => JobsService.deleteJob({ id: jobId })),
+      )
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["jobs"] })
+      setSelectedJobs([])
+      showSuccessToast("The selected jobs have been deleted.")
+    },
+    onError: (error) => {
+      showErrorToast(error.message)
+    },
+  })
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allJobIds = jobsData?.data?.map((job) => job.id) || []
+      setSelectedJobs(allJobIds)
+    } else {
+      setSelectedJobs([])
+    }
+  }
+
+  const handleSelectJob = (jobId: string, checked: boolean) => {
+    setSelectedJobs((prev) =>
+      checked
+        ? [...prev, jobId]
+        : prev.filter((id) => id !== jobId)
+    )
+  }
+
+  useEffect(() => {
+    setSelectedJobs([])
+  }, [page])
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
-        <Heading size="lg">Job List</Heading>
+        <Flex justifyContent="space-between" alignItems="center">
+          <Heading size="lg">Job List</Heading>
+          <Button
+            colorScheme="red"
+            onClick={() => deleteMutation.mutate(selectedJobs)}
+            disabled={selectedJobs.length === 0 || deleteMutation.isPending}
+            loading={deleteMutation.isPending}
+          >
+            <FiTrash />
+            Delete Selected ({selectedJobs.length})
+          </Button>
+        </Flex>
         <VStack align="stretch" gap={4}>
           {isLoading ? (
             <PendingJobs />
@@ -65,6 +119,15 @@ function JobList() {
             <Table.Root>
               <Table.Header>
                 <Table.Row>
+                  <Table.ColumnHeader>
+                    <Checkbox
+                      checked={
+                        jobsData?.data?.length > 0 &&
+                        selectedJobs.length === jobsData?.data?.length
+                      }
+                      onCheckedChange={({ checked }) => handleSelectAll(!!checked)}
+                    />
+                  </Table.ColumnHeader>
                   <Table.ColumnHeader>ID</Table.ColumnHeader>
                   <Table.ColumnHeader>Title</Table.ColumnHeader>
                   <Table.ColumnHeader>Description</Table.ColumnHeader>
@@ -74,6 +137,12 @@ function JobList() {
               <Table.Body>
                 {jobsData.data.map((job) => (
                   <Table.Row key={job.id}>
+                    <Table.Cell>
+                      <Checkbox
+                        checked={selectedJobs.includes(job.id)}
+                        onCheckedChange={({ checked }) => handleSelectJob(job.id, !!checked)}
+                      />
+                    </Table.Cell>
                     <Table.Cell>{job.id}</Table.Cell>
                     <Table.Cell>{job.title}</Table.Cell>
                     <Table.Cell>

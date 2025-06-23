@@ -29,6 +29,15 @@ import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import type { ApiError } from "@/client/core/ApiError"
 
+interface CandidateData {
+  id: number
+  name: string
+  email: string
+  phone: string
+  cv_filename: string
+  created_at: string
+}
+
 interface JobWithFiles {
   title: string
   description: string
@@ -51,6 +60,7 @@ const JobScoring = () => {
   const [displayTitle, setDisplayTitle] = useState("")
   const [displayDescription, setDisplayDescription] = useState("")
   const [displayFiles, setDisplayFiles] = useState<{ id: number; name: string }[]>([])
+  const [candidates, setCandidates] = useState<CandidateData[]>([])
   const [isSaved, setIsSaved] = useState(false)
   // Popup states
   const [isJobDetailsOpen, setIsJobDetailsOpen] = useState(false)
@@ -77,7 +87,6 @@ const JobScoring = () => {
       setInputDescription(jobData.description || "")
       setDisplayTitle(jobData.title)
       setDisplayDescription(jobData.description || "")
-      // If there are files in the job data, parse them and set them
       if (jobData.files) {
         try {
           const parsedFiles = JSON.parse(jobData.files)
@@ -89,6 +98,46 @@ const JobScoring = () => {
             }))
             setInputFiles(files)
             setDisplayFiles(files.map((f) => ({ id: f.id, name: f.name })))
+
+            // Fetch candidate data for each file
+            const fetchCandidates = async () => {
+              const candidatePromises = files.map(async (file) => {
+                try {
+                  const candidateAnalysis =
+                    await CandidateService.getCandidateAnalysisResult({
+                      fileName: file.name,
+                    })
+                  if (candidateAnalysis && candidateAnalysis.analysis_result) {
+                    const candidateData = JSON.parse(
+                      candidateAnalysis.analysis_result,
+                    )
+                    return {
+                      id: parseInt(candidateAnalysis.id, 10),
+                      name: candidateData.name || "N/A",
+                      email: candidateData.email || "N/A",
+                      phone: candidateData.phone || "N/A",
+                      cv_filename: file.name,
+                      created_at: new Date(
+                        candidateAnalysis.created_at,
+                      ).toLocaleDateString(),
+                    }
+                  }
+                } catch (error) {
+                  console.error(
+                    `Failed to fetch analysis for ${file.name}`,
+                    error,
+                  )
+                }
+                return null
+              })
+              const resolvedCandidates = await Promise.all(candidatePromises)
+              setCandidates(
+                resolvedCandidates.filter(
+                  (c): c is CandidateData => c !== null,
+                ),
+              )
+            }
+            fetchCandidates()
           }
         } catch (e) {
           console.error("Error parsing files:", e)
@@ -369,12 +418,25 @@ const JobScoring = () => {
     setIsLoadingJobAnalysis(true)
     try {
       const job = await JobsService.readJob({ id: jobId })
-      // Use type assertion since analysis_result exists in backend but not in generated types
-      const jobWithAnalysis = job as any
-      if (jobWithAnalysis.analysis_result) {
-        const analysis = JSON.parse(jobWithAnalysis.analysis_result)
-        setJobAnalysisResult(analysis)
+      const jobDetails = { ...job } as any
+
+      if (jobDetails.analysis_result) {
+        try {
+          jobDetails.analysis_result = JSON.parse(jobDetails.analysis_result)
+        } catch (e) {
+          console.error("Error parsing job analysis_result:", e)
+        }
       }
+
+      if (jobDetails.files) {
+        try {
+          jobDetails.files = JSON.parse(jobDetails.files)
+        } catch (e) {
+          console.error("Error parsing job files:", e)
+        }
+      }
+
+      setJobAnalysisResult(jobDetails)
     } catch (error) {
       console.error("Error fetching job analysis:", error)
       handleError(error as ApiError)
@@ -639,40 +701,59 @@ const JobScoring = () => {
                 <Table.Header>
                   <Table.Row>
                     <Table.ColumnHeader>ID</Table.ColumnHeader>
-                    <Table.ColumnHeader>File Name</Table.ColumnHeader>
+                    <Table.ColumnHeader>Candidate Name</Table.ColumnHeader>
+                    <Table.ColumnHeader>Email</Table.ColumnHeader>
+                    <Table.ColumnHeader>Phone Number</Table.ColumnHeader>
+                    <Table.ColumnHeader>CV</Table.ColumnHeader>
+                    <Table.ColumnHeader>
+                      Candidate Created Date
+                    </Table.ColumnHeader>
                     <Table.ColumnHeader>Actions</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {displayFiles.map((file) => (
-                    <Table.Row key={file.id}>
-                      <Table.Cell>{file.id}</Table.Cell>
-                      <Table.Cell>{file.name}</Table.Cell>
+                  {candidates.map((candidate) => (
+                    <Table.Row key={candidate.id}>
+                      <Table.Cell>{candidate.id}</Table.Cell>
+                      <Table.Cell>{candidate.name}</Table.Cell>
+                      <Table.Cell>{candidate.email}</Table.Cell>
+                      <Table.Cell>{candidate.phone}</Table.Cell>
+                      <Table.Cell>{candidate.cv_filename}</Table.Cell>
+                      <Table.Cell>{candidate.created_at}</Table.Cell>
                       <Table.Cell>
                         <HStack>
                           <Button
                             size="sm"
                             colorScheme="blue"
-                            onClick={() => handleFileDetailsClick(file)}
+                            onClick={() =>
+                              handleFileDetailsClick({
+                                id: candidate.id,
+                                name: candidate.cv_filename,
+                              })
+                            }
                             loading={
                               isLoadingFileAnalysis &&
-                              selectedFile?.id === file.id
+                              selectedFile?.id === candidate.id
                             }
                           >
                             Details
                           </Button>
-                          {analysisRun && analysisScoreResult[file.name] && (
-                            <Button
-                              size="sm"
-                              colorScheme="teal"
-                              onClick={() => {
-                                setSelectedFile(file)
-                                setIsAnalysisDetailsOpen(true)
-                              }}
-                            >
-                              Score
-                            </Button>
-                          )}
+                          {analysisRun &&
+                            analysisScoreResult[candidate.cv_filename] && (
+                              <Button
+                                size="sm"
+                                colorScheme="teal"
+                                onClick={() => {
+                                  setSelectedFile({
+                                    id: candidate.id,
+                                    name: candidate.cv_filename,
+                                  })
+                                  setIsAnalysisDetailsOpen(true)
+                                }}
+                              >
+                                Score
+                              </Button>
+                            )}
                         </HStack>
                       </Table.Cell>
                     </Table.Row>

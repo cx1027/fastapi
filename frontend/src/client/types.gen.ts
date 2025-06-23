@@ -358,3 +358,35 @@ export type UtilsTestEmailData = {
 export type UtilsTestEmailResponse = (Message);
 
 export type UtilsHealthCheckResponse = (boolean);
+
+export type ScoreSaveScoreAnalysisData = {
+    jobId: string;
+    candidateFileName: string;
+    scoreResult: {
+        [key: string]: unknown;
+    };
+};
+
+export type ScoreSaveScoreAnalysisResponse = (ScoreAnalysisPublic);
+
+export type ScoreGetScoreAnalysisByJobData = {
+    jobId: string;
+};
+
+export type ScoreGetScoreAnalysisByJobResponse = (Array<ScoreAnalysisPublic>);
+
+export type ScoreGetScoreAnalysisByJobAndCandidateData = {
+    jobId: string;
+    candidateFileName: string;
+};
+
+export type ScoreGetScoreAnalysisByJobAndCandidateResponse = (ScoreAnalysisPublic);
+
+export type ScoreAnalysisPublic = {
+    id: string;
+    job_id: string;
+    candidate_file_name: string;
+    score_result: string;
+    created_at: string;
+    updated_at: string;
+};

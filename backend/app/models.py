@@ -137,6 +137,16 @@ class CandidateAnalysis(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
 
+# Database model for score analysis results
+class ScoreAnalysis(SQLModel, table=True):
+    id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
+    job_id: uuid.UUID = Field(foreign_key="job.id", nullable=False, ondelete="CASCADE")
+    candidate_file_name: str = Field(max_length=255, index=True)  # Candidate file name
+    score_result: str = Field(max_length=10000)  # JSON string of score analysis result
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: datetime = Field(default_factory=datetime.utcnow)
+
+
 # Properties to return via API, id is always required
 class JobPublic(JobBase):
     id: uuid.UUID
@@ -157,6 +167,16 @@ class CandidateAnalysisPublic(SQLModel):
     file_name: str
     original_file_name: str | None
     analysis_result: str
+    created_at: datetime
+    updated_at: datetime
+
+
+# Properties to return via API for score analysis
+class ScoreAnalysisPublic(SQLModel):
+    id: uuid.UUID
+    job_id: uuid.UUID
+    candidate_file_name: str
+    score_result: str
     created_at: datetime
     updated_at: datetime
 

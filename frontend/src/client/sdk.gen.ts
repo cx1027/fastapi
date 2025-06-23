@@ -3,7 +3,7 @@
 import type { CancelablePromise } from './core/CancelablePromise';
 import { OpenAPI } from './core/OpenAPI';
 import { request as __request } from './core/request';
-import type { CandidateAnalyseCandidateCvData, CandidateAnalyseCandidateCvResponse, CandidateGetCandidateAnalysisResultData, CandidateGetCandidateAnalysisResultResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, JobAnalyseJobData, JobAnalyseJobResponse, JobsReadJobsData, JobsReadJobsResponse, JobsCreateJobData, JobsCreateJobResponse, JobsReadJobData, JobsReadJobResponse, JobsUpdateJobData, JobsUpdateJobResponse, JobsDeleteJobData, JobsDeleteJobResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, ScoreAnalyseScoreData, ScoreAnalyseScoreResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse } from './types.gen';
+import type { CandidateAnalyseCandidateCvData, CandidateAnalyseCandidateCvResponse, CandidateGetCandidateAnalysisResultData, CandidateGetCandidateAnalysisResultResponse, ItemsReadItemsData, ItemsReadItemsResponse, ItemsCreateItemData, ItemsCreateItemResponse, ItemsReadItemData, ItemsReadItemResponse, ItemsUpdateItemData, ItemsUpdateItemResponse, ItemsDeleteItemData, ItemsDeleteItemResponse, JobAnalyseJobData, JobAnalyseJobResponse, JobsReadJobsData, JobsReadJobsResponse, JobsCreateJobData, JobsCreateJobResponse, JobsReadJobData, JobsReadJobResponse, JobsUpdateJobData, JobsUpdateJobResponse, JobsDeleteJobData, JobsDeleteJobResponse, LoginLoginAccessTokenData, LoginLoginAccessTokenResponse, LoginTestTokenResponse, LoginRecoverPasswordData, LoginRecoverPasswordResponse, LoginResetPasswordData, LoginResetPasswordResponse, LoginRecoverPasswordHtmlContentData, LoginRecoverPasswordHtmlContentResponse, PrivateCreateUserData, PrivateCreateUserResponse, ScoreAnalyseScoreData, ScoreAnalyseScoreResponse, UsersReadUsersData, UsersReadUsersResponse, UsersCreateUserData, UsersCreateUserResponse, UsersReadUserMeResponse, UsersDeleteUserMeResponse, UsersUpdateUserMeData, UsersUpdateUserMeResponse, UsersUpdatePasswordMeData, UsersUpdatePasswordMeResponse, UsersRegisterUserData, UsersRegisterUserResponse, UsersReadUserByIdData, UsersReadUserByIdResponse, UsersUpdateUserData, UsersUpdateUserResponse, UsersDeleteUserData, UsersDeleteUserResponse, UtilsTestEmailData, UtilsTestEmailResponse, UtilsHealthCheckResponse, ScoreSaveScoreAnalysisData, ScoreSaveScoreAnalysisResponse, ScoreGetScoreAnalysisByJobData, ScoreGetScoreAnalysisByJobResponse, ScoreGetScoreAnalysisByJobAndCandidateData, ScoreGetScoreAnalysisByJobAndCandidateResponse } from './types.gen';
 
 export class CandidateService {
     /**
@@ -437,6 +437,76 @@ export class ScoreService {
             url: '/api/v1/score/score_analyse',
             body: data.requestBody,
             mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Save Score Analysis
+     * Save score analysis result to the database.
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.candidateFileName
+     * @param data.scoreResult
+     * @returns ScoreAnalysisPublic Successful Response
+     * @throws ApiError
+     */
+    public static saveScoreAnalysis(data: ScoreSaveScoreAnalysisData): CancelablePromise<ScoreSaveScoreAnalysisResponse> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/v1/score/save_score_analysis',
+            query: {
+                'job_id': data.jobId,
+                'candidate_file_name': data.candidateFileName,
+            },
+            body: data.scoreResult,
+            mediaType: 'application/json',
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Score Analysis By Job
+     * Retrieve all score analysis results for a specific job.
+     * @param data The data for the request.
+     * @param data.jobId
+     * @returns ScoreAnalysisPublic Successful Response
+     * @throws ApiError
+     */
+    public static getScoreAnalysisByJob(data: ScoreGetScoreAnalysisByJobData): CancelablePromise<ScoreGetScoreAnalysisByJobResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/score/score_analysis/{job_id}',
+            path: {
+                'job_id': data.jobId
+            },
+            errors: {
+                422: 'Validation Error'
+            }
+        });
+    }
+    
+    /**
+     * Get Score Analysis By Job And Candidate
+     * Retrieve score analysis result for a specific job and candidate file.
+     * @param data The data for the request.
+     * @param data.jobId
+     * @param data.candidateFileName
+     * @returns ScoreAnalysisPublic Successful Response
+     * @throws ApiError
+     */
+    public static getScoreAnalysisByJobAndCandidate(data: ScoreGetScoreAnalysisByJobAndCandidateData): CancelablePromise<ScoreGetScoreAnalysisByJobAndCandidateResponse> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/v1/score/score_analysis/{job_id}/{candidate_file_name}',
+            path: {
+                'job_id': data.jobId,
+                'candidate_file_name': data.candidateFileName
+            },
             errors: {
                 422: 'Validation Error'
             }

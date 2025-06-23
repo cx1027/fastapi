@@ -86,6 +86,13 @@ const JobScoring = () => {
     enabled: !!jobId,
   })
 
+  // Query to check if score analysis results exist for this job
+  const { data: scoreAnalyses } = useQuery({
+    queryKey: ["score-analysis", jobId],
+    queryFn: () => (jobId ? ScoreService.getScoreAnalysisByJob({ jobId }) : []),
+    enabled: !!jobId,
+  })
+
   useEffect(() => {
     if (jobData) {
       setInputTitle(jobData.title)
@@ -159,21 +166,25 @@ const JobScoring = () => {
         }
       }
 
-      // If there's a saved analysis result, load it
-      const jobWithAnalysis = jobData as any // To access analysis_result easily
-      if (jobWithAnalysis.analysis_result) {
-        try {
-          const savedAnalysis = JSON.parse(jobWithAnalysis.analysis_result)
-          setAnalysisScoreResult(savedAnalysis)
-          setAnalysisRun(true) // This will show the 'Score' and 'Save Analysis' buttons
-        } catch (e) {
-          console.error("Error parsing saved analysis result:", e)
-        }
+      // If there are saved score analysis results, load them
+      if (scoreAnalyses && scoreAnalyses.length > 0) {
+        const savedScoreResults = scoreAnalyses.reduce((acc, scoreAnalysis) => {
+          try {
+            const scoreData = JSON.parse(scoreAnalysis.score_result)
+            acc[scoreAnalysis.candidate_file_name] = scoreData
+          } catch (e) {
+            console.error("Error parsing saved score result:", e)
+          }
+          return acc
+        }, {} as Record<string, AnalysisResult>)
+        
+        setAnalysisScoreResult(savedScoreResults)
+        setAnalysisRun(true) // This will show the 'Score' buttons
       }
       
       setIsSaved(true)
     }
-  }, [jobData])
+  }, [jobData, scoreAnalyses])
 
   const runAnalysisMutation = useMutation({
     mutationFn: async () => {
@@ -220,20 +231,25 @@ const JobScoring = () => {
   })
 
   const saveAnalysisMutation = useMutation({
-    mutationFn: (analysisResult: Record<string, AnalysisResult>) => {
+    mutationFn: async (analysisResult: Record<string, AnalysisResult>) => {
       if (!jobId) {
         throw new Error("Job ID not found")
       }
-      return JobsService.updateJob({
-        id: jobId,
-        requestBody: {
-          analysis_result: JSON.stringify(analysisResult),
-        },
+      
+      // Save each score analysis result to the new ScoreAnalysis table
+      const savePromises = Object.entries(analysisResult).map(async ([fileName, scoreResult]) => {
+        return ScoreService.saveScoreAnalysis({
+          jobId: jobId,
+          candidateFileName: fileName,
+          scoreResult: scoreResult,
+        })
       })
+      
+      await Promise.all(savePromises)
+      return { success: true }
     },
     onSuccess: () => {
       showSuccessToast("Analysis saved successfully.")
-      queryClient.invalidateQueries({ queryKey: ["job", jobId] })
       queryClient.invalidateQueries({ queryKey: ["jobs"] })
       setIsAnalysisDetailsOpen(false) // Close the popup
     },

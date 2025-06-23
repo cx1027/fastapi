@@ -14,7 +14,12 @@ import {
 } from "@chakra-ui/react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { JobsService, CandidateService, ScoreService } from "../../client"
+import {
+  JobsService,
+  CandidateService,
+  ScoreService,
+  JobService,
+} from "../../client"
 import {
   DialogActionTrigger,
   DialogBody,
@@ -324,6 +329,28 @@ const JobScoring = () => {
       // Invalidate both the specific job query and the jobs list
       queryClient.invalidateQueries({ queryKey: ["job", jobId || data.id] })
       queryClient.invalidateQueries({ queryKey: ["jobs"] })
+
+      // After successfully saving the job, trigger the analysis
+      const currentJobId = jobId || data.id
+      // Always call analysis, even if owner_id is missing
+      JobService.analyseJob({
+        requestBody: {
+          id: currentJobId,
+          title: data.title,
+          description: data.description,
+          owner_id: jobData?.owner_id ?? null,
+          files: data.files ?? "[]",
+        },
+      })
+        .then(() => {
+          showSuccessToast(
+            "Job analysis initiated. Results will be available shortly.",
+          )
+          queryClient.invalidateQueries({ queryKey: ["job", currentJobId] })
+        })
+        .catch((error) => {
+          handleError(error)
+        })
     },
     onError: (error: ApiError) => {
       console.error("=== MUTATION: Error ===", error)
@@ -777,7 +804,7 @@ const JobScoring = () => {
               {isLoadingJobAnalysis ? (
                 <Text>Loading analysis results...</Text>
               ) : (
-                renderAnalysisResult(jobAnalysisResult)
+                renderAnalysisResult(jobAnalysisResult?.analysis_result ?? null)
               )}
             </DialogBody>
             <DialogFooter>

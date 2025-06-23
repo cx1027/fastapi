@@ -25,6 +25,8 @@ def output2json(output):
 
 def analyse_job(job_data):
     start = time.time()
+    
+    print("job data:\n", job_data)
 
     llm = ChatOpenAI(
         openai_api_base=os.getenv("GROQ_API_BASE"),  # Groq endpoint
@@ -43,7 +45,7 @@ def analyse_job(job_data):
     print("job_data.description:\n", job_data.description)
     # print("job_data output_analysis:\n", output_analysis)
     json_output = output2json(output_analysis)
-    # print("Parsed JSON output:", json_output)
+    print("Parsed JSON output:", json_output)
 
     return json_output
 

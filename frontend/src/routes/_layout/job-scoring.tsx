@@ -187,12 +187,9 @@ const JobScoring = () => {
             const candidateAnalysis = await CandidateService.getCandidateAnalysisResult({ fileName: file.name });
             if (candidateAnalysis && candidateAnalysis.analysis_result) {
               const candidateData = JSON.parse(candidateAnalysis.analysis_result);
+              const jobAnalysisResult = jobData.analysis_result ? JSON.parse(jobData.analysis_result) : {};
               const scoreData = {
-                job: {
-                  id: jobData.id,
-                  title: jobData.title,
-                  description: jobData.description,
-                },
+                job: jobAnalysisResult,
                 candidate: candidateData,
               };
               const scoreResult = await ScoreService.analyseScore({ requestBody: scoreData });

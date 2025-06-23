@@ -26,4 +26,5 @@ async def analyse_job(job_data: JobAnalyzeRequest, session: Session = Depends(ge
         session.add(job)
         session.commit()
         session.refresh(job)
-    return result
+    print("job result:\n", result)
+    return result  # <-- return the analysis result dict

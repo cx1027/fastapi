@@ -29,6 +29,9 @@ def generate_content(job, candidate):
 def analyse_score(job_candidate_data):
     start = time.time()
     LOGGER.info("Start analyse matching")
+    
+    print("job_candidate_data.job!!!!!!!!!!!!!!:\n", job_candidate_data.job)
+    print("\njob_candidate_data.candidate!!!!!!!!!!!!!!:\n", job_candidate_data.candidate)
 
     content = generate_content(job=job_candidate_data.job, candidate=job_candidate_data.candidate)
 

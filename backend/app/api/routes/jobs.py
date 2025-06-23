@@ -1,5 +1,6 @@
 import uuid
 from typing import Any
+from datetime import date
 
 from fastapi import APIRouter, HTTPException
 from sqlmodel import func, select
@@ -14,30 +15,43 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 
 @router.get("/", response_model=JobsPublic)
 def read_jobs(
-    session: SessionDep, current_user: CurrentUser, skip: int = 0, limit: int = 100
+    session: SessionDep,
+    current_user: CurrentUser,
+    skip: int = 0,
+    limit: int = 100,
+    title: str | None = None,
+    description: str | None = None,
+    created_at: date | None = None,
 ) -> Any:
     """
     Retrieve jobs.
     """
-    if current_user.is_superuser:
-        count_statement = select(func.count()).select_from(Job)
-        count = session.exec(count_statement).one()
-        statement = select(Job).offset(skip).limit(limit)
-        jobs = session.exec(statement).all()
-    else:
-        count_statement = (
-            select(func.count())
-            .select_from(Job)
-            .where(Job.owner_id == current_user.id)
+    base_statement = select(Job)
+    count_statement = select(func.count()).select_from(Job)
+
+    if not current_user.is_superuser:
+        base_statement = base_statement.where(Job.owner_id == current_user.id)
+        count_statement = count_statement.where(Job.owner_id == current_user.id)
+
+    if title:
+        base_statement = base_statement.where(func.lower(Job.title).like(f"%{title.lower()}%"))
+        count_statement = count_statement.where(func.lower(Job.title).like(f"%{title.lower()}%"))
+
+    if description:
+        base_statement = base_statement.where(
+            func.lower(Job.description).like(f"%{description.lower()}%")
         )
-        count = session.exec(count_statement).one()
-        statement = (
-            select(Job)
-            .where(Job.owner_id == current_user.id)
-            .offset(skip)
-            .limit(limit)
+        count_statement = count_statement.where(
+            func.lower(Job.description).like(f"%{description.lower()}%")
         )
-        jobs = session.exec(statement).all()
+
+    if created_at:
+        base_statement = base_statement.where(func.date(Job.created_at) == created_at)
+        count_statement = count_statement.where(func.date(Job.created_at) == created_at)
+
+    count = session.exec(count_statement).one()
+    statement = base_statement.offset(skip).limit(limit)
+    jobs = session.exec(statement).all()
 
     return JobsPublic(data=jobs, count=count)
 

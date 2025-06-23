@@ -15,6 +15,7 @@ import { z } from "zod"
 
 import { JobsService } from "../../client"
 import JobActionsMenu from "../../components/Common/JobActionsMenu"
+import SearchJobs from "../../components/Jobs/SearchJobs"
 import PendingJobs from "../../components/Pending/PendingJobs"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
@@ -29,26 +30,50 @@ const PER_PAGE = 5
 
 const jobsSearchSchema = z.object({
   page: z.number().catch(1),
+  title: z.string().optional(),
+  description: z.string().optional(),
+  created_date: z.string().optional(),
 })
 
-function getJobsQueryOptions({ page }: { page: number }) {
+function getJobsQueryOptions({
+  page,
+  title,
+  description,
+  created_date,
+}: {
+  page: number
+  title?: string
+  description?: string
+  created_date?: string
+}) {
   return {
     queryFn: () =>
-      JobsService.readJobs({ skip: (page - 1) * PER_PAGE, limit: PER_PAGE }),
-    queryKey: ["jobs", { page }],
+      JobsService.readJobs({
+        skip: (page - 1) * PER_PAGE,
+        limit: PER_PAGE,
+        title,
+        description,
+        createdAt: created_date,
+      }),
+    queryKey: ["jobs", { page, title, description, created_date }],
   }
 }
 
 export const Route = createFileRoute("/_layout/job-list")({
   validateSearch: jobsSearchSchema,
-  loaderDeps: ({ search: { page } }) => ({ page }),
-  loader: ({ deps: { page } }) => getJobsQueryOptions({ page }),
+  loaderDeps: ({ search: { page, title, description, created_date } }) => ({
+    page,
+    title,
+    description,
+    created_date,
+  }),
+  loader: ({ deps }) => getJobsQueryOptions(deps),
   component: JobList,
 })
 
 function JobList() {
   const navigate = useNavigate()
-  const { page } = Route.useSearch()
+  const { page, title, description, created_date } = Route.useSearch()
   const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
   const [selectedJobs, setSelectedJobs] = useState<string[]>([])
   const queryClient = useQueryClient()
@@ -102,15 +127,18 @@ function JobList() {
       <VStack gap={8} align="stretch">
         <Flex justifyContent="space-between" alignItems="center">
           <Heading size="lg">Job List</Heading>
-          <Button
-            colorScheme="red"
-            onClick={() => deleteMutation.mutate(selectedJobs)}
-            disabled={selectedJobs.length === 0 || deleteMutation.isPending}
-            loading={deleteMutation.isPending}
-          >
-            <FiTrash />
-            Delete Selected ({selectedJobs.length})
-          </Button>
+          <Flex gap={2}>
+            <SearchJobs />
+            <Button
+              colorScheme="red"
+              onClick={() => deleteMutation.mutate(selectedJobs)}
+              disabled={selectedJobs.length === 0 || deleteMutation.isPending}
+              loading={deleteMutation.isPending}
+            >
+              <FiTrash />
+              Delete Selected ({selectedJobs.length})
+            </Button>
+          </Flex>
         </Flex>
         <VStack align="stretch" gap={4}>
           {isLoading ? (
@@ -129,8 +157,9 @@ function JobList() {
                     />
                   </Table.ColumnHeader>
                   <Table.ColumnHeader>ID</Table.ColumnHeader>
-                  <Table.ColumnHeader>Title</Table.ColumnHeader>
-                  <Table.ColumnHeader>Description</Table.ColumnHeader>
+                  <Table.ColumnHeader>Job Title</Table.ColumnHeader>
+                  <Table.ColumnHeader>Job Description</Table.ColumnHeader>
+                  <Table.ColumnHeader>Job Created Date</Table.ColumnHeader>
                   <Table.ColumnHeader>Actions</Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
@@ -149,11 +178,15 @@ function JobList() {
                       {job.description || "No description"}
                     </Table.Cell>
                     <Table.Cell>
+                      {new Date(job.created_at).toLocaleDateString()}
+                    </Table.Cell>
+                    <Table.Cell>
                       <JobActionsMenu
                         job={{
                           id: job.id,
                           title: job.title,
                           description: job.description || null,
+                          created_at: job.created_at,
                         }}
                       />
                     </Table.Cell>

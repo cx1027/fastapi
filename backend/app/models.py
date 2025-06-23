@@ -124,6 +124,7 @@ class Job(JobBase, table=True):
     owner: User | None = Relationship(back_populates="jobs")
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
     analysis_result: str | None = Field(default=None, max_length=10000)  # New field for analysis result
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # Database model for candidate analysis results
@@ -142,6 +143,7 @@ class JobPublic(JobBase):
     owner_id: uuid.UUID
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
     analysis_result: str | None = Field(default=None, max_length=10000)  # New field for analysis result
+    created_at: datetime
 
 
 class JobsPublic(SQLModel):

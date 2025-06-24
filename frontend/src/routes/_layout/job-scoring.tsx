@@ -166,7 +166,7 @@ const JobScoring = () => {
         }
       }
 
-      // If there are saved score analysis results, load them
+      // Only load saved score analysis results if the job is in saved state (not editing)
       if (scoreAnalyses && scoreAnalyses.length > 0) {
         const savedScoreResults = scoreAnalyses.reduce((acc, scoreAnalysis) => {
           try {
@@ -448,7 +448,7 @@ const JobScoring = () => {
     ])
     setIsSaved(false)
     setAnalysisRun(false)
-    setAnalysisScoreResult({})
+    setAnalysisScoreResult({}) // Clear score analysis results when editing
   }
 
   // Function to fetch job analysis result

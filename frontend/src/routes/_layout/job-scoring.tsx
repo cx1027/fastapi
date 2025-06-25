@@ -742,12 +742,17 @@ const JobScoring = () => {
                   <Table.Row>
                     <Table.ColumnHeader>ID</Table.ColumnHeader>
                     <Table.ColumnHeader>Candidate Name</Table.ColumnHeader>
-                    <Table.ColumnHeader>Email</Table.ColumnHeader>
-                    <Table.ColumnHeader>Phone Number</Table.ColumnHeader>
+                    <Table.ColumnHeader>Contact</Table.ColumnHeader>
                     <Table.ColumnHeader>CV</Table.ColumnHeader>
                     <Table.ColumnHeader>
                       Candidate Created Date
                     </Table.ColumnHeader>
+                    {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
+                      <>
+                        <Table.ColumnHeader>Score</Table.ColumnHeader>
+                        <Table.ColumnHeader>Summary</Table.ColumnHeader>
+                      </>
+                    )}
                     <Table.ColumnHeader>Actions</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
@@ -756,10 +761,33 @@ const JobScoring = () => {
                     <Table.Row key={candidate.id}>
                       <Table.Cell>{candidate.id}</Table.Cell>
                       <Table.Cell>{candidate.name}</Table.Cell>
-                      <Table.Cell>{candidate.email}</Table.Cell>
-                      <Table.Cell>{candidate.phone}</Table.Cell>
+                      <Table.Cell>{`${candidate.email} / ${candidate.phone}`}</Table.Cell>
                       <Table.Cell>{candidate.cv_filename}</Table.Cell>
                       <Table.Cell>{candidate.created_at}</Table.Cell>
+                      {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
+                        <>
+                          <Table.Cell>
+                            {analysisScoreResult[candidate.cv_filename] ? (
+                              <Text fontWeight="bold" color="blue.600">
+                                {typeof analysisScoreResult[candidate.cv_filename].score === 'number' 
+                                  ? analysisScoreResult[candidate.cv_filename].score.toFixed(1)
+                                  : analysisScoreResult[candidate.cv_filename].score}
+                              </Text>
+                            ) : (
+                              <Text color="gray.500">N/A</Text>
+                            )}
+                          </Table.Cell>
+                          <Table.Cell>
+                            {analysisScoreResult[candidate.cv_filename]?.summary_comment ? (
+                              <Text fontSize="sm" whiteSpace="pre-wrap">
+                                {analysisScoreResult[candidate.cv_filename].summary_comment}
+                              </Text>
+                            ) : (
+                              <Text color="gray.500" fontSize="sm">N/A</Text>
+                            )}
+                          </Table.Cell>
+                        </>
+                      )}
                       <Table.Cell>
                         <HStack>
                           <Button

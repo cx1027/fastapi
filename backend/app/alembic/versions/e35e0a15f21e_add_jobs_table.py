@@ -25,8 +25,19 @@ def upgrade():
     
     if 'files' not in columns:
         op.add_column('job', sa.Column('files', sqlmodel.sql.sqltypes.AutoString(), nullable=True))
+        
+    op.alter_column('job', 'description',
+        existing_type=sa.String(length=255),
+        type_=sa.String(length=10000),
+        existing_nullable=True
+    )
 
 
 def downgrade():
     # Remove files column from job table
+    op.alter_column('job', 'description',
+        existing_type=sa.String(length=1000),
+        type_=sa.String(length=255),
+        existing_nullable=True
+    )
     op.drop_column('job', 'files')

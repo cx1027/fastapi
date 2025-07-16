@@ -80,6 +80,18 @@ const JobScoring = () => {
   const [isAnalysisDetailsOpen, setIsAnalysisDetailsOpen] = useState(false)
   const { showSuccessToast } = useCustomToast()
 
+  // Search/filter UI state
+  const [showCandidateSearch, setShowCandidateSearch] = useState(false)
+  const [candidateSearchFields, setCandidateSearchFields] = useState({
+    name: "",
+    contact: "",
+    cv: "",
+    created: "",
+    score: "",
+    summary: "",
+  })
+  const [appliedCandidateSearch, setAppliedCandidateSearch] = useState(candidateSearchFields)
+
   const { data: jobData } = useQuery({
     queryKey: ["job", jobId],
     queryFn: () => (jobId ? JobsService.readJob({ id: jobId }) : null),
@@ -593,6 +605,64 @@ const JobScoring = () => {
     )
   }
 
+  // Sort candidates by score (high to low) after analysisScoreResult is set
+  const sortedCandidates = React.useMemo(() => {
+    if (analysisRun && Object.keys(analysisScoreResult).length > 0) {
+      return [...candidates].sort((a, b) => {
+        const scoreA = analysisScoreResult[a.cv_filename]?.score ?? -Infinity
+        const scoreB = analysisScoreResult[b.cv_filename]?.score ?? -Infinity
+        return (typeof scoreB === 'number' ? scoreB : parseFloat(scoreB)) - (typeof scoreA === 'number' ? scoreA : parseFloat(scoreA))
+      })
+    }
+    return candidates
+  }, [candidates, analysisRun, analysisScoreResult])
+
+  // Filter and sort candidates by search and score
+  const filteredCandidates = React.useMemo(() => {
+    let list = sortedCandidates
+    const { name, contact, cv, created, score, summary } = appliedCandidateSearch
+    // Parse score operator and value
+    let scoreOp = null, scoreVal = null
+    if (score) {
+      const match = score.match(/^([><=]?)(\d+(?:\.\d+)?)$/)
+      if (match) {
+        scoreOp = match[1] || '='
+        scoreVal = parseFloat(match[2])
+      }
+    }
+    if (
+      name || contact || cv || created || score || summary
+    ) {
+      list = list.filter((candidate) => {
+        const candidateContact = `${candidate.email} / ${candidate.phone}`.toLowerCase()
+        const candidateCV = candidate.cv_filename.toLowerCase()
+        const candidateCreated = candidate.created_at.toLowerCase()
+        const candidateName = candidate.name.toLowerCase()
+        const candidateScoreRaw = analysisScoreResult[candidate.cv_filename]?.score ?? ""
+        const candidateScore = typeof candidateScoreRaw === 'number' ? candidateScoreRaw : parseFloat(candidateScoreRaw)
+        const candidateSummary = (analysisScoreResult[candidate.cv_filename]?.summary_comment ?? "").toLowerCase()
+        let scoreMatch = true
+        if (scoreOp && scoreVal !== null && !isNaN(candidateScore)) {
+          if (scoreOp === '>') scoreMatch = candidateScore > scoreVal
+          else if (scoreOp === '<') scoreMatch = candidateScore < scoreVal
+          else scoreMatch = candidateScore === scoreVal
+        } else if (score) {
+          // fallback: substring match
+          scoreMatch = candidateScoreRaw.toString().toLowerCase().includes(score.toLowerCase())
+        }
+        return (
+          (!name || candidateName.includes(name.toLowerCase())) &&
+          (!contact || candidateContact.includes(contact.toLowerCase())) &&
+          (!cv || candidateCV.includes(cv.toLowerCase())) &&
+          (!created || candidateCreated.includes(created.toLowerCase())) &&
+          scoreMatch &&
+          (!summary || candidateSummary.includes(summary.toLowerCase()))
+        )
+      })
+    }
+    return list
+  }, [appliedCandidateSearch, sortedCandidates, analysisScoreResult])
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
@@ -686,7 +756,53 @@ const JobScoring = () => {
 
         {/* Files Section */}
         <VStack align="stretch">
-          <Heading size="md">Files</Heading>
+          <Heading size="md">Candidates</Heading>
+          <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
+            Search
+          </Button>
+          {showCandidateSearch && (
+            <Box mb={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
+              <VStack gap={2} align="stretch">
+                <HStack>
+                  <Input
+                    placeholder="Candidate Name"
+                    value={candidateSearchFields.name}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, name: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Contact (email/phone)"
+                    value={candidateSearchFields.contact}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, contact: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="CV"
+                    value={candidateSearchFields.cv}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, cv: e.target.value }))}
+                  />
+                </HStack>
+                <HStack>
+                  <Input
+                    placeholder="Candidate Created Date"
+                    value={candidateSearchFields.created}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, created: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Score"
+                    value={candidateSearchFields.score}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, score: e.target.value }))}
+                  />
+                  <Input
+                    placeholder="Summary"
+                    value={candidateSearchFields.summary}
+                    onChange={e => setCandidateSearchFields(f => ({ ...f, summary: e.target.value }))}
+                  />
+                </HStack>
+                <Button size="sm" colorScheme="teal" alignSelf="end" onClick={() => setAppliedCandidateSearch(candidateSearchFields)}>
+                  Apply
+                </Button>
+              </VStack>
+            </Box>
+          )}
           {!isSaved ? (
             // Input Form for Files
             <Box
@@ -697,7 +813,7 @@ const JobScoring = () => {
               shadow="md"
             >
               <VStack gap={4}>
-                <Input type="file" onChange={handleFileUpload} multiple />
+                <Input type="file" onChange={handleFileUpload} multiple aria-label="Upload candidate CVs" />
                 {inputFiles.length > 0 && (
                   <Table.Root>
                     <Table.Header>
@@ -757,7 +873,7 @@ const JobScoring = () => {
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {candidates.map((candidate) => (
+                  {filteredCandidates.map((candidate) => (
                     <Table.Row key={candidate.id}>
                       <Table.Cell>{candidate.id}</Table.Cell>
                       <Table.Cell>{candidate.name}</Table.Cell>
@@ -819,7 +935,7 @@ const JobScoring = () => {
                                   setIsAnalysisDetailsOpen(true)
                                 }}
                               >
-                                Score
+                                Score Details
                               </Button>
                             )}
                         </HStack>

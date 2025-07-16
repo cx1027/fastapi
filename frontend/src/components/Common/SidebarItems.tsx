@@ -18,6 +18,7 @@ export const sidebarItems = [
 
 interface SidebarItemsProps {
   onClose?: () => void
+  compact?: boolean
 }
 
 interface Item {
@@ -26,7 +27,7 @@ interface Item {
   path: string
 }
 
-const SidebarItems = ({ onClose }: SidebarItemsProps) => {
+const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
 
@@ -35,28 +36,32 @@ const SidebarItems = ({ onClose }: SidebarItemsProps) => {
     : sidebarItems
 
   const listItems = finalItems.map(({ icon, title, path }) => (
-    <RouterLink key={title} to={path} onClick={onClose}>
+    <RouterLink key={title} to={path} onClick={onClose} style={{ display: 'block' }}>
       <Flex
-        gap={4}
-        px={4}
+        gap={compact ? 0 : 4}
+        px={compact ? 0 : 4}
         py={2}
+        justifyContent="center"
         _hover={{
           background: "gray.subtle",
         }}
         alignItems="center"
-        fontSize="sm"
+        fontSize="xl"
+        flexDirection="column"
       >
-        <Icon as={icon} alignSelf="center" />
-        <Text ml={2}>{title}</Text>
+        <Icon as={icon} alignSelf="center" boxSize={6} />
+        {!compact && <Text ml={2} fontSize="sm">{title}</Text>}
       </Flex>
     </RouterLink>
   ))
 
   return (
     <>
-      <Text fontSize="xs" px={4} py={2} fontWeight="bold">
-        Menu
-      </Text>
+      {!compact && (
+        <Text fontSize="xs" px={4} py={2} fontWeight="bold">
+          Menu
+        </Text>
+      )}
       <Box>{listItems}</Box>
     </>
   )

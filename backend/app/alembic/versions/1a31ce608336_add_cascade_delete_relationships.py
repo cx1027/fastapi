@@ -24,6 +24,11 @@ def upgrade():
                nullable=False)
     op.drop_constraint('item_owner_id_fkey', 'item', type_='foreignkey')
     op.create_foreign_key(None, 'item', 'user', ['owner_id'], ['id'], ondelete='CASCADE')
+    op.alter_column('job', 'description',
+        existing_type=sa.String(length=255),
+        type_=sa.String(length=10000),
+        existing_nullable=True
+    )
     # ### end Alembic commands ###
 
 
@@ -34,4 +39,9 @@ def downgrade():
     op.alter_column('item', 'owner_id',
                existing_type=sa.UUID(),
                nullable=True)
+    op.alter_column('job', 'description',
+        existing_type=sa.String(length=1000),
+        type_=sa.String(length=255),
+        existing_nullable=True
+    )
     # ### end Alembic commands ###

@@ -97,20 +97,20 @@ class ItemsPublic(SQLModel):
 # Shared properties
 class JobBase(SQLModel):
     title: str = Field(min_length=1, max_length=255)
-    description: str | None = Field(default=None, max_length=255)
+    description: str | None = Field(default=None, max_length=10000)
 
 
 # Properties to receive on job creation
 class JobCreate(JobBase):
     title: str = Field(min_length=1, max_length=255)  # type: ignore
-    description: str | None = Field(default=None, max_length=1000)  # type: ignore
+    description: str | None = Field(default=None, max_length=10000)  # type: ignore
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
 
 
 # Properties to receive on job update
 class JobUpdate(JobBase):
     title: str | None = Field(default=None, min_length=1, max_length=255)  # type: ignore
-    description: str | None = Field(default=None, max_length=1000)  # type: ignore
+    description: str | None = Field(default=None, max_length=10000)  # type: ignore
     files: str | None = Field(default=None, max_length=1000)  # type: ignore
     analysis_result: str | None = Field(default=None, max_length=10000)  # type: ignore
 

@@ -919,8 +919,8 @@ const JobScoring = () => {
                     </Table.ColumnHeader>
                     <Table.ColumnHeader>ID</Table.ColumnHeader>
                     <Table.ColumnHeader>Candidate Name</Table.ColumnHeader>
-                    <Table.ColumnHeader>Contact</Table.ColumnHeader>
-                    <Table.ColumnHeader>CV</Table.ColumnHeader>
+                    <Table.ColumnHeader w="120px">Contact (Email & Number)</Table.ColumnHeader>
+                    <Table.ColumnHeader w="100px">CV</Table.ColumnHeader>
                     <Table.ColumnHeader>
                       Candidate Created Date
                     </Table.ColumnHeader>
@@ -930,7 +930,7 @@ const JobScoring = () => {
                         <Table.ColumnHeader>Summary</Table.ColumnHeader>
                       </>
                     )}
-                    <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                    <Table.ColumnHeader>Details</Table.ColumnHeader>
                     <Table.ColumnHeader>Delete</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
@@ -946,8 +946,16 @@ const JobScoring = () => {
                       </Table.Cell>
                       <Table.Cell>{candidate.id}</Table.Cell>
                       <Table.Cell>{candidate.name}</Table.Cell>
-                      <Table.Cell>{`${candidate.email} / ${candidate.phone}`}</Table.Cell>
-                      <Table.Cell>{candidate.cv_filename}</Table.Cell>
+                      <Table.Cell>
+                        <Text maxW="120px" whiteSpace="normal" wordBreak="break-all">
+                          {candidate.email} / {candidate.phone}
+                        </Text>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Text maxW="100px" whiteSpace="normal" wordBreak="break-all">
+                          {candidate.cv_filename}
+                        </Text>
+                      </Table.Cell>
                       <Table.Cell>{candidate.created_at}</Table.Cell>
                       {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
                         <>
@@ -989,7 +997,7 @@ const JobScoring = () => {
                               selectedFile?.id === candidate.id
                             }
                           >
-                            Details
+                            Candidate
                           </Button>
                           {analysisRun &&
                             analysisScoreResult[candidate.cv_filename] && (
@@ -1004,7 +1012,7 @@ const JobScoring = () => {
                                   setIsAnalysisDetailsOpen(true)
                                 }}
                               >
-                                Score Details
+                                Score
                               </Button>
                             )}
                         </HStack>

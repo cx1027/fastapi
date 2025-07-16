@@ -92,6 +92,49 @@ const JobScoring = () => {
   })
   const [appliedCandidateSearch, setAppliedCandidateSearch] = useState(candidateSearchFields)
 
+  // Multi-select state for candidate deletion
+  const [selectedCandidateIds, setSelectedCandidateIds] = useState<number[]>([])
+  const handleSelectCandidate = (id: number, checked: boolean) => {
+    setSelectedCandidateIds((prev) =>
+      checked ? [...prev, id] : prev.filter((cid) => cid !== id)
+    )
+  }
+  const handleSelectAllCandidates = (checked: boolean) => {
+    if (checked) {
+      setSelectedCandidateIds(filteredCandidates.map((c) => c.id))
+    } else {
+      setSelectedCandidateIds([])
+    }
+  }
+  // Helper to persist candidate deletions
+  const persistCandidateDeletion = (remainingCandidates: CandidateData[]) => {
+    // Update job files in backend, preserving original ids and file names
+    const newFiles = remainingCandidates.map((c) => ({ id: c.id, name: c.cv_filename }))
+    const jobData: JobWithFiles = {
+      title: displayTitle,
+      description: displayDescription,
+      files: newFiles,
+    }
+    mutation.mutate(jobData)
+  }
+  const handleDeleteSelectedCandidates = () => {
+    // Remove selected candidates from candidates state and persist
+    setCandidates((prev) => {
+      const remaining = prev.filter((c) => !selectedCandidateIds.includes(c.id))
+      persistCandidateDeletion(remaining)
+      return remaining
+    })
+    setSelectedCandidateIds([])
+  }
+  const handleDeleteSingleCandidate = (candidateId: number) => {
+    setCandidates((prev) => {
+      const remaining = prev.filter((c) => c.id !== candidateId)
+      persistCandidateDeletion(remaining)
+      return remaining
+    })
+    setSelectedCandidateIds((prev) => prev.filter((id) => id !== candidateId))
+  }
+
   const { data: jobData } = useQuery({
     queryKey: ["job", jobId],
     queryFn: () => (jobId ? JobsService.readJob({ id: jobId }) : null),
@@ -760,6 +803,17 @@ const JobScoring = () => {
           <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
             Search
           </Button>
+          <Button
+            size="sm"
+            colorScheme="red"
+            alignSelf="start"
+            mb={2}
+            ml={2}
+            onClick={handleDeleteSelectedCandidates}
+            disabled={selectedCandidateIds.length === 0}
+          >
+            Delete Selected ({selectedCandidateIds.length})
+          </Button>
           {showCandidateSearch && (
             <Box mb={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
               <VStack gap={2} align="stretch">
@@ -856,6 +910,13 @@ const JobScoring = () => {
               <Table.Root>
                 <Table.Header>
                   <Table.Row>
+                    <Table.ColumnHeader>
+                      <input
+                        type="checkbox"
+                        checked={filteredCandidates.length > 0 && selectedCandidateIds.length === filteredCandidates.length}
+                        onChange={e => handleSelectAllCandidates(e.target.checked)}
+                      />
+                    </Table.ColumnHeader>
                     <Table.ColumnHeader>ID</Table.ColumnHeader>
                     <Table.ColumnHeader>Candidate Name</Table.ColumnHeader>
                     <Table.ColumnHeader>Contact</Table.ColumnHeader>
@@ -870,11 +931,19 @@ const JobScoring = () => {
                       </>
                     )}
                     <Table.ColumnHeader>Actions</Table.ColumnHeader>
+                    <Table.ColumnHeader>Delete</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
                   {filteredCandidates.map((candidate) => (
                     <Table.Row key={candidate.id}>
+                      <Table.Cell>
+                        <input
+                          type="checkbox"
+                          checked={selectedCandidateIds.includes(candidate.id)}
+                          onChange={e => handleSelectCandidate(candidate.id, e.target.checked)}
+                        />
+                      </Table.Cell>
                       <Table.Cell>{candidate.id}</Table.Cell>
                       <Table.Cell>{candidate.name}</Table.Cell>
                       <Table.Cell>{`${candidate.email} / ${candidate.phone}`}</Table.Cell>
@@ -939,6 +1008,15 @@ const JobScoring = () => {
                               </Button>
                             )}
                         </HStack>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          size="sm"
+                          colorScheme="red"
+                          onClick={() => handleDeleteSingleCandidate(candidate.id)}
+                        >
+                          Delete
+                        </Button>
                       </Table.Cell>
                     </Table.Row>
                   ))}

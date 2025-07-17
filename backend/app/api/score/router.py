@@ -22,7 +22,7 @@ async def analyse_score(request: Request):
         body = await request.json()
         print(f"Received request body: {body}")
         # Now parse as your model
-        data = ScoreRequest(**body)
+        # data = ScoreRequest(**body)
     except Exception as e:
         print(f"Error parsing request: {e}")
         return JSONResponse(status_code=422, content={"error": str(e), "body": body})

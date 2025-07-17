@@ -4,7 +4,6 @@ Respond using only the provided information and do not rely on your basic knowle
 Experience should include required duration time and job name field of work.
 Only use the given data to determine educational qualifications and certificates; do not make assumptions about these qualifications.
 However, you are allowed to combine the provided details to draw logical conclusions about soft skills.
-Please respond in JSON format, and follow the format in fn_job_analysis.
 """
 
 fn_job_analysis = [

@@ -26,7 +26,7 @@ import {
 } from "../../components/ui/pagination"
 import useCustomToast from "@/hooks/useCustomToast"
 
-const PER_PAGE = 5
+const PER_PAGE = 10
 
 const jobsSearchSchema = z.object({
   page: z.number().catch(1),

@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request, Body
+from fastapi.responses import JSONResponse
 from . import service
 from .schemas import ScoreSchema
 from app.models import ScoreAnalysis, ScoreAnalysisPublic
 from app.api.deps import SessionDep
 import json
+import logging
+# import LOGGER
 
 # router = APIRouter()
 router = APIRouter(prefix="/score", tags=["score"])
@@ -14,7 +17,15 @@ router = APIRouter(prefix="/score", tags=["score"])
 
 # @router.post("/analyse", response_model=ResponseSchema)
 @router.post("/score_analyse")
-async def analyse_score(job_candidate_data: ScoreSchema, session: SessionDep = None):
+async def analyse_score(request: Request):
+    try:
+        body = await request.json()
+        print(f"Received request body: {body}")
+        # Now parse as your model
+        data = ScoreRequest(**body)
+    except Exception as e:
+        print(f"Error parsing request: {e}")
+        return JSONResponse(status_code=422, content={"error": str(e), "body": body})
     result = service.analyse_score(job_candidate_data=job_candidate_data)
     return result
 

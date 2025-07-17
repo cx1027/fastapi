@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, Suspense } from "react"
 import {
   Container,
   Heading,
@@ -33,6 +33,8 @@ import {
 import useCustomToast from "@/hooks/useCustomToast"
 import { handleError } from "@/utils"
 import type { ApiError } from "@/client/core/ApiError"
+import 'react-quill/dist/quill.snow.css'
+import DOMPurify from 'dompurify'
 
 interface CandidateData {
   id: number
@@ -52,6 +54,8 @@ interface JobWithFiles {
 interface AnalysisResult {
   [key: string]: any
 }
+
+const ReactQuill = React.lazy(() => import("react-quill").then(mod => ({ default: mod.default as unknown as React.ComponentType<any> })))
 
 const JobScoring = () => {
   const navigate = useNavigate()
@@ -809,11 +813,16 @@ const JobScoring = () => {
                   value={inputTitle}
                   onChange={(e) => setInputTitle(e.target.value)}
                 />
-                <Textarea
-                  placeholder="Enter job description"
-                  value={inputDescription}
-                  onChange={(e) => setInputDescription(e.target.value)}
-                />
+                <Box w="100%">
+                  <Suspense fallback={<div>Loading editor...</div>}>
+                    <ReactQuill
+                      theme="snow"
+                      value={inputDescription}
+                      onChange={setInputDescription}
+                      style={{ width: '100%', minHeight: 120 }}
+                    />
+                  </Suspense>
+                </Box>
               </VStack>
             </Box>
           ) : (
@@ -827,7 +836,16 @@ const JobScoring = () => {
             >
               <VStack align="start" gap={3}>
                 <Text fontWeight="bold">{displayTitle}</Text>
-                <Text>{displayDescription}</Text>
+                <Box w="100%" maxW="100%">
+                  <style>{`
+                    .job-desc-html img { max-width: 100%; }
+                    .job-desc-html ul, .job-desc-html ol { padding-left: 1.5em; }
+                  `}</style>
+                  <div
+                    className="job-desc-html"
+                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(displayDescription) }}
+                  />
+                </Box>
                 <Button
                   size="sm"
                   colorScheme="blue"

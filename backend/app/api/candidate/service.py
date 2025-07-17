@@ -74,41 +74,16 @@ def read_cv_candidate(file_name):
     return content
 
 
-# def analyse_candidate(cv_content):
-#     start = time.time()
-#     LOGGER.info("Start analyse candidate")
-
-#     llm = ChatOpenAI(
-#         openai_api_base=os.getenv("GROQ_API_BASE"),
-#         openai_api_key=os.getenv("OPENAI_API_KEY"),
-#         model=candidate_config.MODEL_NAME,
-#         temperature=0.5
-#         )
-#     completion = llm.predict_messages(
-#         [
-#             SystemMessage(content=system_prompt_candidate),
-#             HumanMessage(content=cv_content),
-#         ],
-#         functions=fn_candidate_analysis,
-#     )
-
-#     output_analysis = completion.additional_kwargs
-#     json_output = output2json(output=output_analysis)
-
-#     LOGGER.info("Done analyse candidate")
-#     LOGGER.info(f"Time analyse candidate: {time.time() - start}")
-
-#     return json_output
-
 def analyse_candidate(cv_content):
     start = time.time()
     LOGGER.info("Start analyse candidate")
 
     llm = ChatOpenAI(
-        base_url="http://localhost:11434/v1",
-        api_key="ollama",  # Ollama ignores the key, but LangChain requires it
-        model="gemma:2b"  # or "mixtral:8x7b" or any model you have pulled
-    )
+        openai_api_base=os.getenv("GROQ_API_BASE"),
+        openai_api_key=os.getenv("OPENAI_API_KEY"),
+        model=candidate_config.MODEL_NAME,
+        temperature=0.5
+        )
     completion = llm.predict_messages(
         [
             SystemMessage(content=system_prompt_candidate),
@@ -117,10 +92,8 @@ def analyse_candidate(cv_content):
         functions=fn_candidate_analysis,
     )
 
-    print("\n !!!!!!candidate completion:\n", completion)
-    output_analysis = completion.content
-    print("\n !!!!!!candidate output_analysis:\n", output_analysis)
-    json_output = output_analysis
+    output_analysis = completion.additional_kwargs
+    json_output = output2json(output=output_analysis)
 
     LOGGER.info("Done analyse candidate")
     LOGGER.info(f"Time analyse candidate: {time.time() - start}")
@@ -131,23 +104,50 @@ def analyse_candidate(cv_content):
 #     start = time.time()
 #     LOGGER.info("Start analyse candidate")
 
-#     # model_name = os.getenv("CANDIDATE_MODEL_NAME", "mixtral:8x7b")
-#     response = ollama.chat(model="gemma:2b", messages=[
-#         {
-#             'role': 'system',
-#             'content': system_prompt_candidate
-#         },
-#         {
-#             'role': 'user',
-#             'content': cv_content,
-#         },
-#     ])
-#     print("\n !!!!!!response:\n", response)
-#     output_analysis = response['message']['content']
-#     print("\n !!!!!!candidateoutput_analysis:\n", output_analysis)
-#     json_output = output2json(output=output_analysis)
+#     llm = ChatOpenAI(
+#         base_url="http://localhost:11434/v1",
+#         api_key="ollama",  # Ollama ignores the key, but LangChain requires it
+#         model="gemma:2b"  # or "mixtral:8x7b" or any model you have pulled
+#     )
+#     completion = llm.predict_messages(
+#         [
+#             SystemMessage(content=system_prompt_candidate),
+#             HumanMessage(content=cv_content),
+#         ],
+#         functions=fn_candidate_analysis,
+#     )
+
+#     print("\n !!!!!!candidate completion:\n", completion)
+#     output_analysis = completion.content
+#     print("\n !!!!!!candidate output_analysis:\n", output_analysis)
+#     json_output = output_analysis
 
 #     LOGGER.info("Done analyse candidate")
 #     LOGGER.info(f"Time analyse candidate: {time.time() - start}")
 
 #     return json_output
+
+# # def analyse_candidate(cv_content):
+# #     start = time.time()
+# #     LOGGER.info("Start analyse candidate")
+
+# #     # model_name = os.getenv("CANDIDATE_MODEL_NAME", "mixtral:8x7b")
+# #     response = ollama.chat(model="gemma:2b", messages=[
+# #         {
+# #             'role': 'system',
+# #             'content': system_prompt_candidate
+# #         },
+# #         {
+# #             'role': 'user',
+# #             'content': cv_content,
+# #         },
+# #     ])
+# #     print("\n !!!!!!response:\n", response)
+# #     output_analysis = response['message']['content']
+# #     print("\n !!!!!!candidateoutput_analysis:\n", output_analysis)
+# #     json_output = output2json(output=output_analysis)
+
+# #     LOGGER.info("Done analyse candidate")
+# #     LOGGER.info(f"Time analyse candidate: {time.time() - start}")
+
+# #     return json_output

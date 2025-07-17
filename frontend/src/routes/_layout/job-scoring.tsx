@@ -168,7 +168,7 @@ const JobScoring = () => {
 
             // Fetch candidate data for each file
             const fetchCandidates = async () => {
-              const candidatePromises = files.map(async (file) => {
+              const candidatePromises = files.map(async (file, index) => {
                 try {
                   const candidateAnalysis =
                     await CandidateService.getCandidateAnalysisResult({
@@ -178,8 +178,9 @@ const JobScoring = () => {
                     const candidateData = JSON.parse(
                       candidateAnalysis.analysis_result,
                     )
+                    const parsedId = parseInt(candidateAnalysis.id, 10)
                     return {
-                      id: parseInt(candidateAnalysis.id, 10),
+                      id: Number.isNaN(parsedId) ? index + 1 : parsedId,
                       name: candidateData.name || "N/A",
                       email: candidateData.email || "N/A",
                       phone: candidateData.phone || "N/A",
@@ -385,6 +386,49 @@ const JobScoring = () => {
         })),
       )
       setIsSaved(true)
+
+      // Always fetch latest candidate data after mutation
+      if (files.length > 0) {
+        const fetchCandidates = async () => {
+          const candidatePromises = files.map(async (file, index) => {
+            try {
+              const candidateAnalysis =
+                await CandidateService.getCandidateAnalysisResult({
+                  fileName: file.name,
+                })
+              if (candidateAnalysis && candidateAnalysis.analysis_result) {
+                const candidateData = JSON.parse(
+                  candidateAnalysis.analysis_result,
+                )
+                const parsedId = parseInt(candidateAnalysis.id, 10)
+                return {
+                  id: Number.isNaN(parsedId) ? index + 1 : parsedId,
+                  name: candidateData.name || "N/A",
+                  email: candidateData.email || "N/A",
+                  phone: candidateData.phone || "N/A",
+                  cv_filename: file.name,
+                  created_at: new Date(
+                    candidateAnalysis.created_at,
+                  ).toLocaleDateString(),
+                }
+              }
+            } catch (error) {
+              console.error(
+                `Failed to fetch analysis for ${file.name}`,
+                error,
+              )
+            }
+            return null
+          })
+          const resolvedCandidates = await Promise.all(candidatePromises)
+          setCandidates(
+            resolvedCandidates.filter(
+              (c): c is CandidateData => c !== null,
+            ),
+          )
+        }
+        fetchCandidates()
+      }
 
       // If this was a new job, update the URL with the new job ID
       if (!jobId && data.id) {

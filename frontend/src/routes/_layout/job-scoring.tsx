@@ -12,7 +12,7 @@ import {
   Box,
   Badge,
 } from "@chakra-ui/react"
-import { createFileRoute, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, useNavigate, useMatch } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   JobsService,
@@ -60,7 +60,7 @@ const ReactQuill = React.lazy(() => import("react-quill").then(mod => ({ default
 const JobScoring = () => {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const { jobId } = Route.useSearch()
+  const { jobId } = useMatch().search;
   // Input states
   const [inputTitle, setInputTitle] = useState("")
   const [inputDescription, setInputDescription] = useState("")
@@ -331,7 +331,7 @@ const JobScoring = () => {
         console.log("=== MUTATION: Updating existing job ===", jobId)
         // Update existing job - send all fields explicitly
         return JobsService.updateJob({
-          id: jobId,
+          id: jobId || "",
           requestBody: {
             title: data.title,
             description: data.description,
@@ -754,6 +754,95 @@ const JobScoring = () => {
     return list
   }, [appliedCandidateSearch, sortedCandidates, analysisScoreResult])
 
+  // Add step state at the top of the component
+  const [step, setStep] = useState(0)
+
+  // Step 1: handle job details continue
+  const handleContinueJobDetails = async () => {
+    if (!inputTitle.trim()) {
+      showSuccessToast("Please enter a job title")
+      return
+    }
+    try {
+      // Save job (no files yet)
+      const response = await JobsService.createJob({
+        requestBody: {
+          title: inputTitle,
+          description: inputDescription,
+          files: "[]",
+        },
+      })
+      setDisplayTitle(inputTitle)
+      setDisplayDescription(inputDescription)
+      setIsSaved(true)
+      // Analyze job
+      await JobService.analyseJob({
+        requestBody: {
+          id: response.id,
+          title: inputTitle,
+          description: inputDescription,
+          owner_id: response.owner_id ?? null,
+          files: "[]",
+        },
+      })
+      // Update URL with jobId
+      navigate({ to: "/job-scoring", search: { jobId: response.id } })
+      setStep(1)
+    } catch (error) {
+      handleError(error as ApiError)
+    }
+  }
+
+  // Step 2: handle upload CVs continue
+  const handleContinueUploadCV = async () => {
+    if (inputFiles.length === 0) {
+      showSuccessToast("Please upload at least one CV")
+      return
+    }
+    try {
+      // Upload and analyze each file
+      const uploadedFileTasks = inputFiles
+        .filter((file) => file.file)
+        .map(async (file) => {
+          if (file.file) {
+            const response = await CandidateService.analyseCandidateCv({
+              formData: { file: file.file },
+            })
+            const fileName = (response as any)?.file_name || file.name
+            return { id: file.id, name: fileName }
+          }
+          return file
+        })
+      const uploadedFiles = await Promise.all(uploadedFileTasks)
+      // Save job with files
+      await JobsService.updateJob({
+        id: jobId || "",
+        requestBody: {
+          title: displayTitle,
+          description: displayDescription,
+          files: JSON.stringify(uploadedFiles.map(f => f.name)),
+        },
+      })
+      setDisplayFiles(uploadedFiles.map(f => ({ id: f.id, name: f.name })))
+      setIsSaved(true)
+      setStep(2)
+    } catch (error) {
+      handleError(error as ApiError)
+    }
+  }
+
+  // Step 3: handle submit scoring
+  const handleSubmitScoring = async () => {
+    try {
+      await runAnalysisMutation.mutateAsync()
+      await saveAnalysisMutation.mutateAsync(analysisScoreResult)
+      showSuccessToast("Job and candidate score information saved to Job List.")
+      navigate({ to: "/job-list" })
+    } catch (error) {
+      handleError(error as ApiError)
+    }
+  }
+
   return (
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
@@ -797,18 +886,18 @@ const JobScoring = () => {
         {/* Progress Bar */}
         <HStack justify="center" my={4} gap={0}>
           {[
-            { label: "Enter job details", active: !isSaved },
-            { label: "Upload CV", active: isSaved && !analysisRun },
-            { label: "Scoring candidate", active: analysisRun },
-          ].map((step, idx, arr) => (
-            <React.Fragment key={step.label}>
+            { label: "Enter job details", active: step === 0 },
+            { label: "Upload CV", active: step === 1 },
+            { label: "Scoring candidate", active: step === 2 },
+          ].map((stepObj, idx, arr) => (
+            <React.Fragment key={stepObj.label}>
               <VStack gap={1} minW="100px">
                 <HStack align="center">
                   <Box
                     w={8}
                     h={8}
                     borderRadius="full"
-                    bg={step.active ? "blue.500" : "gray.300"}
+                    bg={stepObj.active ? "blue.500" : "gray.300"}
                     color="white"
                     display="flex"
                     alignItems="center"
@@ -828,147 +917,36 @@ const JobScoring = () => {
                     />
                   )}
                 </HStack>
-                <Text fontSize="sm" color={step.active ? "blue.600" : "gray.500"} fontWeight={step.active ? "bold" : "normal"} textAlign="center">
-                  {step.label}
+                <Text fontSize="sm" color={stepObj.active ? "blue.600" : "gray.500"} fontWeight={stepObj.active ? "bold" : "normal"} textAlign="center">
+                  {stepObj.label}
                 </Text>
               </VStack>
             </React.Fragment>
           ))}
         </HStack>
 
-        {/* Job Details Section */}
-        <VStack align="stretch">
-          <Heading size="md">Job Details</Heading>
-          {!isSaved ? (
-            // Input Form for Job Details
-            <Box
-              p={4}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              shadow="md"
-            >
+        {/* Step 1: Job Details Only */}
+        {step === 0 && (
+          <VStack align="stretch">
+            <Heading size="md">Job Details</Heading>
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
               <VStack gap={4}>
-                <Input
-                  placeholder="Enter job title"
-                  value={inputTitle}
-                  onChange={(e) => setInputTitle(e.target.value)}
-                />
+                <Input placeholder="Enter job title" value={inputTitle} onChange={(e) => setInputTitle(e.target.value)} />
                 <Box w="100%">
                   <Suspense fallback={<div>Loading editor...</div>}>
-                    <ReactQuill
-                      theme="snow"
-                      value={inputDescription}
-                      onChange={setInputDescription}
-                      style={{ width: '100%', minHeight: 120 }}
-                    />
+                    <ReactQuill theme="snow" value={inputDescription} onChange={setInputDescription} style={{ width: '100%', minHeight: 120 }} />
                   </Suspense>
                 </Box>
+                <Button colorScheme="blue" onClick={handleContinueJobDetails}>Continue</Button>
               </VStack>
             </Box>
-          ) : (
-            // Display View for Job Details
-            <Box
-              p={4}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              shadow="md"
-            >
-              <VStack align="start" gap={3}>
-                <Text fontWeight="bold">{displayTitle}</Text>
-                <Box w="100%" maxW="100%">
-                  <style>{`
-                    .job-desc-html img { max-width: 100%; }
-                    .job-desc-html ul, .job-desc-html ol { padding-left: 1.5em; }
-                  `}</style>
-                  <div
-                    className="job-desc-html"
-                    dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(displayDescription) }}
-                  />
-                </Box>
-                <Button
-                  size="sm"
-                  colorScheme="blue"
-                  onClick={handleJobDetailsClick}
-                  loading={isLoadingJobAnalysis}
-                >
-                  Details
-                </Button>
-              </VStack>
-            </Box>
-          )}
-        </VStack>
-
-        {/* Files Section */}
-        <VStack align="stretch">
-          <Heading size="md">Candidates</Heading>
-          <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
-            Search
-          </Button>
-          <Button
-            size="sm"
-            colorScheme="red"
-            alignSelf="start"
-            mb={2}
-            ml={2}
-            onClick={handleDeleteSelectedCandidates}
-            disabled={selectedCandidateIds.length === 0}
-          >
-            Delete Selected ({selectedCandidateIds.length})
-          </Button>
-          {showCandidateSearch && (
-            <Box mb={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
-              <VStack gap={2} align="stretch">
-                <HStack>
-                  <Input
-                    placeholder="Candidate Name"
-                    value={candidateSearchFields.name}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, name: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="Contact (email/phone)"
-                    value={candidateSearchFields.contact}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, contact: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="CV"
-                    value={candidateSearchFields.cv}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, cv: e.target.value }))}
-                  />
-                </HStack>
-                <HStack>
-                  <Input
-                    placeholder="Candidate Created Date"
-                    value={candidateSearchFields.created}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, created: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="Score"
-                    value={candidateSearchFields.score}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, score: e.target.value }))}
-                  />
-                  <Input
-                    placeholder="Summary"
-                    value={candidateSearchFields.summary}
-                    onChange={e => setCandidateSearchFields(f => ({ ...f, summary: e.target.value }))}
-                  />
-                </HStack>
-                <Button size="sm" colorScheme="teal" alignSelf="end" onClick={() => setAppliedCandidateSearch(candidateSearchFields)}>
-                  Apply
-                </Button>
-              </VStack>
-            </Box>
-          )}
-          {!isSaved ? (
-            // Input Form for Files
-            <Box
-              p={4}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              shadow="md"
-            >
+          </VStack>
+        )}
+        {/* Step 2: Upload CVs Only */}
+        {step === 1 && (
+          <VStack align="stretch">
+            <Heading size="md">Upload Candidate CVs</Heading>
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
               <VStack gap={4}>
                 <Input type="file" onChange={handleFileUpload} multiple aria-label="Upload candidate CVs" />
                 {inputFiles.length > 0 && (
@@ -986,156 +964,45 @@ const JobScoring = () => {
                           <Table.Cell>{file.id}</Table.Cell>
                           <Table.Cell>{file.name}</Table.Cell>
                           <Table.Cell>
-                            <Button
-                              size="sm"
-                              colorScheme="red"
-                              onClick={() => handleDeleteFile(file.id)}
-                            >
-                              Delete
-                            </Button>
+                            <Button size="sm" colorScheme="red" onClick={() => handleDeleteFile(file.id)}>Delete</Button>
                           </Table.Cell>
                         </Table.Row>
                       ))}
                     </Table.Body>
                   </Table.Root>
                 )}
+                <Button colorScheme="blue" onClick={handleContinueUploadCV}>Continue</Button>
               </VStack>
             </Box>
-          ) : (
-            // Display View for Files
-            <Box
-              p={4}
-              borderWidth="1px"
-              borderRadius="md"
-              bg="white"
-              shadow="md"
-            >
+          </VStack>
+        )}
+        {/* Step 3: Scoring Only */}
+        {step === 2 && (
+          <VStack align="stretch">
+            <Heading size="md">Scoring Candidates</Heading>
+            <Box p={4} borderWidth="1px" borderRadius="md" bg="white" shadow="md">
               <Table.Root>
                 <Table.Header>
                   <Table.Row>
-                    <Table.ColumnHeader>
-                      <input
-                        type="checkbox"
-                        checked={filteredCandidates.length > 0 && selectedCandidateIds.length === filteredCandidates.length}
-                        onChange={e => handleSelectAllCandidates(e.target.checked)}
-                      />
-                    </Table.ColumnHeader>
                     <Table.ColumnHeader>ID</Table.ColumnHeader>
                     <Table.ColumnHeader>Candidate Name</Table.ColumnHeader>
-                    <Table.ColumnHeader w="120px">Contact (Email & Number)</Table.ColumnHeader>
-                    <Table.ColumnHeader w="100px">CV</Table.ColumnHeader>
-                    <Table.ColumnHeader>
-                      Candidate Created Date
-                    </Table.ColumnHeader>
-                    {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
-                      <>
-                        <Table.ColumnHeader>Score</Table.ColumnHeader>
-                        <Table.ColumnHeader>Summary</Table.ColumnHeader>
-                      </>
-                    )}
-                    <Table.ColumnHeader>Details</Table.ColumnHeader>
-                    <Table.ColumnHeader>Delete</Table.ColumnHeader>
+                    <Table.ColumnHeader>CV</Table.ColumnHeader>
                   </Table.Row>
                 </Table.Header>
                 <Table.Body>
-                  {filteredCandidates.map((candidate) => (
-                    <Table.Row key={candidate.id}>
-                      <Table.Cell>
-                        <input
-                          type="checkbox"
-                          checked={selectedCandidateIds.includes(candidate.id)}
-                          onChange={e => handleSelectCandidate(candidate.id, e.target.checked)}
-                        />
-                      </Table.Cell>
-                      <Table.Cell>{candidate.id}</Table.Cell>
-                      <Table.Cell>{candidate.name}</Table.Cell>
-                      <Table.Cell>
-                        <Text maxW="120px" whiteSpace="normal" wordBreak="break-all">
-                          {candidate.email} / {candidate.phone}
-                        </Text>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Text maxW="100px" whiteSpace="normal" wordBreak="break-all">
-                          {candidate.cv_filename}
-                        </Text>
-                      </Table.Cell>
-                      <Table.Cell>{candidate.created_at}</Table.Cell>
-                      {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
-                        <>
-                          <Table.Cell>
-                            {analysisScoreResult[candidate.cv_filename] ? (
-                              <Text fontWeight="bold" color="blue.600">
-                                {typeof analysisScoreResult[candidate.cv_filename].score === 'number' 
-                                  ? analysisScoreResult[candidate.cv_filename].score.toFixed(1)
-                                  : analysisScoreResult[candidate.cv_filename].score}
-                              </Text>
-                            ) : (
-                              <Text color="gray.500">N/A</Text>
-                            )}
-                          </Table.Cell>
-                          <Table.Cell>
-                            {analysisScoreResult[candidate.cv_filename]?.summary_comment ? (
-                              <Text fontSize="sm" whiteSpace="pre-wrap">
-                                {analysisScoreResult[candidate.cv_filename].summary_comment}
-                              </Text>
-                            ) : (
-                              <Text color="gray.500" fontSize="sm">N/A</Text>
-                            )}
-                          </Table.Cell>
-                        </>
-                      )}
-                      <Table.Cell>
-                        <HStack>
-                          <Button
-                            size="sm"
-                            colorScheme="blue"
-                            onClick={() =>
-                              handleFileDetailsClick({
-                                id: candidate.id,
-                                name: candidate.cv_filename,
-                              })
-                            }
-                            loading={
-                              isLoadingFileAnalysis &&
-                              selectedFile?.id === candidate.id
-                            }
-                          >
-                            Candidate
-                          </Button>
-                          {analysisRun &&
-                            analysisScoreResult[candidate.cv_filename] && (
-                              <Button
-                                size="sm"
-                                colorScheme="teal"
-                                onClick={() => {
-                                  setSelectedFile({
-                                    id: candidate.id,
-                                    name: candidate.cv_filename,
-                                  })
-                                  setIsAnalysisDetailsOpen(true)
-                                }}
-                              >
-                                Score
-                              </Button>
-                            )}
-                        </HStack>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Button
-                          size="sm"
-                          colorScheme="red"
-                          onClick={() => handleDeleteSingleCandidate(candidate.id)}
-                        >
-                          Delete
-                        </Button>
-                      </Table.Cell>
+                  {displayFiles.map((file, idx) => (
+                    <Table.Row key={file.id}>
+                      <Table.Cell>{file.id}</Table.Cell>
+                      <Table.Cell>{file.name}</Table.Cell>
+                      <Table.Cell>{file.name}</Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
               </Table.Root>
+              <Button colorScheme="green" onClick={handleSubmitScoring} mt={4}>Submit</Button>
             </Box>
-          )}
-        </VStack>
+          </VStack>
+        )}
 
         {/* Job Analysis Details Popup */}
         <DialogRoot

@@ -35,8 +35,13 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
   const matchRoute = useMatchRoute();
 
   const listItems = finalItems.map(({ icon, title, path }) => {
-    // Use matchRoute for robust active detection
-    const isActive = !!matchRoute({ to: path, fuzzy: true });
+    // Highlight Job List for /job-list and /job-edit
+    let isActive = false;
+    if (path === "/job-list") {
+      isActive = !!matchRoute({ to: "/job-list", fuzzy: true }) || !!matchRoute({ to: "/job-edit", fuzzy: true });
+    } else {
+      isActive = !!matchRoute({ to: path, fuzzy: true });
+    }
     return (
       <RouterLink key={title} to={path} onClick={onClose} style={{ display: 'block' }}>
         <Flex

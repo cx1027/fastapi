@@ -795,31 +795,44 @@ const JobScoring = () => {
           </HStack>
         </HStack>
         {/* Progress Bar */}
-        <HStack justify="center" my={4} gap={8}>
+        <HStack justify="center" my={4} gap={0}>
           {[
             { label: "Enter job details", active: !isSaved },
             { label: "Upload CV", active: isSaved && !analysisRun },
             { label: "Scoring candidate", active: analysisRun },
-          ].map((step, idx) => (
-            <VStack key={step.label} gap={1}>
-              <Box
-                w={8}
-                h={8}
-                borderRadius="full"
-                bg={step.active ? "blue.500" : "gray.300"}
-                color="white"
-                display="flex"
-                alignItems="center"
-                justifyContent="center"
-                fontWeight="bold"
-                fontSize="lg"
-              >
-                {idx + 1}
-              </Box>
-              <Text fontSize="sm" color={step.active ? "blue.600" : "gray.500"} fontWeight={step.active ? "bold" : "normal"} textAlign="center">
-                {step.label}
-              </Text>
-            </VStack>
+          ].map((step, idx, arr) => (
+            <React.Fragment key={step.label}>
+              <VStack gap={1} minW="100px">
+                <HStack align="center">
+                  <Box
+                    w={8}
+                    h={8}
+                    borderRadius="full"
+                    bg={step.active ? "blue.500" : "gray.300"}
+                    color="white"
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    fontWeight="bold"
+                    fontSize="lg"
+                  >
+                    {idx + 1}
+                  </Box>
+                  {idx < arr.length - 1 && (
+                    <Box
+                      flexShrink={0}
+                      height={2}
+                      width="200px"
+                      borderTop="2px dotted #A0AEC0"
+                      mx={2}
+                    />
+                  )}
+                </HStack>
+                <Text fontSize="sm" color={step.active ? "blue.600" : "gray.500"} fontWeight={step.active ? "bold" : "normal"} textAlign="center">
+                  {step.label}
+                </Text>
+              </VStack>
+            </React.Fragment>
           ))}
         </HStack>
 

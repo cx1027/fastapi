@@ -27,7 +27,7 @@ const JobActionsMenu = ({ job }: JobActionsMenuProps) => {
 
   const handleEdit = () => {
     navigate({
-      to: "/job-scoring",
+      to: "/job-editing",
       search: { jobId: job.id }
     })
   }

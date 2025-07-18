@@ -9,7 +9,7 @@ import type { UserPublic } from "@/client"
 export const sidebarItems = [
   { icon: FiHome, title: "Dashboard", path: "/" },
   { icon: FiFileText, title: "Job List", path: "/job-list" },
-  { icon: FiClipboard, title: "Job Score", path: "/job-scoring" },
+  { icon: FiClipboard, title: "New Job Score", path: "/job-scoring" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 

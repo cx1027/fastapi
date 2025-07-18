@@ -759,7 +759,7 @@ const JobScoring = () => {
       <VStack gap={8} align="stretch">
         {/* Header with Title and All Buttons */}
         <HStack justify="space-between">
-          <Heading size="lg">Job Scoring</Heading>
+          <Heading size="lg">Score Candidates for Job</Heading>
           <HStack gap={2}>
             {isSaved ? (
               <>
@@ -793,6 +793,34 @@ const JobScoring = () => {
               </Button>
             )}
           </HStack>
+        </HStack>
+        {/* Progress Bar */}
+        <HStack justify="center" my={4} gap={8}>
+          {[
+            { label: "Enter job details", active: !isSaved },
+            { label: "Upload CV", active: isSaved && !analysisRun },
+            { label: "Scoring candidate", active: analysisRun },
+          ].map((step, idx) => (
+            <VStack key={step.label} gap={1}>
+              <Box
+                w={8}
+                h={8}
+                borderRadius="full"
+                bg={step.active ? "blue.500" : "gray.300"}
+                color="white"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                fontWeight="bold"
+                fontSize="lg"
+              >
+                {idx + 1}
+              </Box>
+              <Text fontSize="sm" color={step.active ? "blue.600" : "gray.500"} fontWeight={step.active ? "bold" : "normal"} textAlign="center">
+                {step.label}
+              </Text>
+            </VStack>
+          ))}
         </HStack>
 
         {/* Job Details Section */}

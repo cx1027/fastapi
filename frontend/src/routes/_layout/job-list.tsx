@@ -86,7 +86,7 @@ function JobList() {
   const fetchJobCandidates = async (jobId: string) => {
     try {
       const scoreAnalyses = await ScoreService.getScoreAnalysisByJob({ jobId })
-      const candidatesWithScores: Array<{name: string, score: number}> = []
+      const candidatesMap = new Map<string, {name: string, score: number, timestamp: string}>()
       
       for (const scoreAnalysis of scoreAnalyses) {
         try {
@@ -116,17 +116,27 @@ function JobList() {
               name = "Unnamed Candidate"
             }
             
-            candidatesWithScores.push({
-              name: name,
-              score: scoreResult.score || 0
-            })
+            // Use candidate name as key to prevent duplicates
+            // If the same candidate appears multiple times, keep the most recent score
+            const existingCandidate = candidatesMap.get(name)
+            const currentScore = scoreResult.score || 0
+            const currentTimestamp = scoreAnalysis.created_at || new Date().toISOString()
+            
+            if (!existingCandidate || new Date(currentTimestamp) > new Date(existingCandidate.timestamp)) {
+              candidatesMap.set(name, {
+                name: name,
+                score: currentScore,
+                timestamp: currentTimestamp
+              })
+            }
           }
         } catch (error) {
           console.error(`Failed to fetch candidate data for ${scoreAnalysis.candidate_file_name}`, error)
         }
       }
       
-      // Sort by score (highest first) and take top 3
+      // Convert map to array, sort by score (highest first) and take top 3
+      const candidatesWithScores = Array.from(candidatesMap.values()).map(({name, score}) => ({name, score}))
       const topCandidates = candidatesWithScores
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)

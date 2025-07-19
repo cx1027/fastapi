@@ -267,7 +267,9 @@ function JobList() {
                     <Table.Cell>{job.id}</Table.Cell>
                     <Table.Cell>{job.title}</Table.Cell>
                     <Table.Cell>
-                      {job.description || "No description"}
+                      {job.description
+                        ? job.description.split(/\s+/).slice(0, 90).join(" ") + (job.description.split(/\s+/).length > 200 ? "..." : "")
+                        : "No description"}
                     </Table.Cell>
                     <Table.Cell>
                       {new Date(job.created_at).toLocaleDateString()}

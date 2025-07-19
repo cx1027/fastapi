@@ -49,6 +49,9 @@ def read_jobs(
         base_statement = base_statement.where(func.date(Job.created_at) == created_at)
         count_statement = count_statement.where(func.date(Job.created_at) == created_at)
 
+    # Add sorting by created_at in descending order (newest first)
+    base_statement = base_statement.order_by(Job.created_at.desc())
+
     count = session.exec(count_statement).one()
     statement = base_statement.offset(skip).limit(limit)
     jobs = session.exec(statement).all()

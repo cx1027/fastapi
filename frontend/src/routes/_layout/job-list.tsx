@@ -7,13 +7,15 @@ import {
   Text,
   Flex,
   Button,
+  Badge,
+  Box,
 } from "@chakra-ui/react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { FiTrash, FiSearch } from "react-icons/fi"
 import { z } from "zod"
 
-import { JobsService } from "../../client"
+import { JobsService, ScoreService, CandidateService } from "../../client"
 import JobActionsMenu from "../../components/Common/JobActionsMenu"
 import SearchJobs from "../../components/Jobs/SearchJobs"
 import PendingJobs from "../../components/Pending/PendingJobs"
@@ -76,8 +78,59 @@ function JobList() {
   const { page, title, description, created_date } = Route.useSearch()
   const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
   const [selectedJobs, setSelectedJobs] = useState<string[]>([])
+  const [jobCandidates, setJobCandidates] = useState<Record<string, Array<{name: string, score: number}>>>({})
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
+
+  // Function to fetch top 3 candidates with scores for a job
+  const fetchJobCandidates = async (jobId: string) => {
+    try {
+      const scoreAnalyses = await ScoreService.getScoreAnalysisByJob({ jobId })
+      const candidatesWithScores: Array<{name: string, score: number}> = []
+      
+      for (const scoreAnalysis of scoreAnalyses) {
+        try {
+          // Get candidate analysis to extract name
+          const candidateAnalysis = await CandidateService.getCandidateAnalysisResult({
+            fileName: scoreAnalysis.candidate_file_name
+          })
+          
+          if (candidateAnalysis && candidateAnalysis.analysis_result) {
+            const candidateData = JSON.parse(candidateAnalysis.analysis_result)
+            const scoreResult = JSON.parse(scoreAnalysis.score_result)
+            
+            candidatesWithScores.push({
+              name: candidateData.name || "Unknown",
+              score: scoreResult.score || 0
+            })
+          }
+        } catch (error) {
+          console.error(`Failed to fetch candidate data for ${scoreAnalysis.candidate_file_name}`, error)
+        }
+      }
+      
+      // Sort by score (highest first) and take top 3
+      const topCandidates = candidatesWithScores
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 3)
+      
+      setJobCandidates(prev => ({
+        ...prev,
+        [jobId]: topCandidates
+      }))
+    } catch (error) {
+      console.error(`Failed to fetch candidates for job ${jobId}`, error)
+    }
+  }
+
+  // Fetch candidates for each job when jobs data is loaded
+  useEffect(() => {
+    if (jobsData?.data) {
+      jobsData.data.forEach(job => {
+        fetchJobCandidates(job.id)
+      })
+    }
+  }, [jobsData?.data])
 
   const handlePageChange = (details: { page: number }) => {
     navigate({
@@ -160,6 +213,7 @@ function JobList() {
                   <Table.ColumnHeader>Job Title</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Description</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Created Date</Table.ColumnHeader>
+                  <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                   <Table.ColumnHeader>Actions</Table.ColumnHeader>
                 </Table.Row>
               </Table.Header>
@@ -179,6 +233,24 @@ function JobList() {
                     </Table.Cell>
                     <Table.Cell>
                       {new Date(job.created_at).toLocaleDateString()}
+                    </Table.Cell>
+                    <Table.Cell>
+                      {jobCandidates[job.id] && jobCandidates[job.id].length > 0 ? (
+                        <VStack align="start" gap={1}>
+                          {jobCandidates[job.id].map((candidate, index) => (
+                            <Flex key={index} gap={2} align="center">
+                              <Text fontSize="sm" fontWeight="medium">
+                                {candidate.name}
+                              </Text>
+                              <Badge colorScheme="green" size="sm">
+                                {candidate.score.toFixed(1)}
+                              </Badge>
+                            </Flex>
+                          ))}
+                        </VStack>
+                      ) : (
+                        <Text color="gray.500" fontSize="sm">No candidates</Text>
+                      )}
                     </Table.Cell>
                     <Table.Cell>
                       <JobActionsMenu

@@ -21,6 +21,7 @@ import { Route as LayoutSettingsImport } from './routes/_layout/settings'
 import { Route as LayoutJobsImport } from './routes/_layout/jobs'
 import { Route as LayoutJobScoringImport } from './routes/_layout/job-scoring'
 import { Route as LayoutJobListImport } from './routes/_layout/job-list'
+import { Route as LayoutJobEditingList1Import } from './routes/_layout/job-editing-list1'
 import { Route as LayoutJobEditingListImport } from './routes/_layout/job-editing-list'
 import { Route as LayoutJobEditingImport } from './routes/_layout/job-editing'
 import { Route as LayoutItemsImport } from './routes/_layout/items'
@@ -75,6 +76,11 @@ const LayoutJobScoringRoute = LayoutJobScoringImport.update({
 
 const LayoutJobListRoute = LayoutJobListImport.update({
   path: '/job-list',
+  getParentRoute: () => LayoutRoute,
+} as any)
+
+const LayoutJobEditingList1Route = LayoutJobEditingList1Import.update({
+  path: '/job-editing-list1',
   getParentRoute: () => LayoutRoute,
 } as any)
 
@@ -138,6 +144,10 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LayoutJobEditingListImport
       parentRoute: typeof LayoutImport
     }
+    '/_layout/job-editing-list1': {
+      preLoaderRoute: typeof LayoutJobEditingList1Import
+      parentRoute: typeof LayoutImport
+    }
     '/_layout/job-list': {
       preLoaderRoute: typeof LayoutJobListImport
       parentRoute: typeof LayoutImport
@@ -169,6 +179,7 @@ export const routeTree = rootRoute.addChildren([
     LayoutItemsRoute,
     LayoutJobEditingRoute,
     LayoutJobEditingListRoute,
+    LayoutJobEditingList1Route,
     LayoutJobListRoute,
     LayoutJobScoringRoute,
     LayoutJobsRoute,

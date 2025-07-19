@@ -61,7 +61,7 @@ function getJobsQueryOptions({
   }
 }
 
-export const Route = createFileRoute("/_layout/job-editing-list")({
+export const Route = createFileRoute("/_layout/job-editing-list1")({
   validateSearch: jobsSearchSchema,
   loaderDeps: ({ search: { page, title, description, created_date } }) => ({
     page,
@@ -264,10 +264,12 @@ function JobList() {
                         onCheckedChange={({ checked }) => handleSelectJob(job.id, !!checked)}
                       />
                     </Table.Cell>
-                    <Table.Cell>{job.id}</Table.Cell>
+                    <Table.Cell w="40px">{job.id}</Table.Cell>
                     <Table.Cell>{job.title}</Table.Cell>
-                    <Table.Cell>
-                      {job.description || "No description"}
+                    <Table.Cell w="300px">
+                      {job.description
+                        ? job.description.split(/\s+/).slice(0, 200).join(" ") + (job.description.split(/\s+/).length > 200 ? "..." : "")
+                        : "No description"}
                     </Table.Cell>
                     <Table.Cell>
                       {new Date(job.created_at).toLocaleDateString()}
@@ -276,11 +278,11 @@ function JobList() {
                       {jobCandidates[job.id] && jobCandidates[job.id].length > 0 ? (
                         <VStack align="start" gap={1}>
                           {jobCandidates[job.id].map((candidate, index) => (
-                            <Flex key={index} gap={2} align="center">
+                            <Flex key={index} direction="column" gap={0} align="flex-start">
                               <Text fontSize="sm" fontWeight="medium">
                                 {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
                               </Text>
-                              <Text fontSize="sm" fontWeight="medium">
+                              <Text fontSize="xs" color="gray.500">
                                 {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
                               <Badge colorScheme="green" size="sm">

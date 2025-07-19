@@ -78,7 +78,7 @@ function JobList() {
   const { page, title, description, created_date } = Route.useSearch()
   const { data: jobsData, isLoading } = useQuery(Route.useLoaderData())
   const [selectedJobs, setSelectedJobs] = useState<string[]>([])
-  const [jobCandidates, setJobCandidates] = useState<Record<string, Array<{name: string, score: number}>>>({})
+  const [jobCandidates, setJobCandidates] = useState<Record<string, Array<{name: string, score: number, phone: string}>>>({})
   const queryClient = useQueryClient()
   const { showSuccessToast, showErrorToast } = useCustomToast()
 
@@ -88,7 +88,7 @@ function JobList() {
     try {
       const scoreAnalyses = await ScoreService.getScoreAnalysisByJob({ jobId })
       console.log("scoreAnalyses raw:", scoreAnalyses)
-      const candidatesMap = new Map<string, {name: string, score: number, timestamp: string}>()
+      const candidatesMap = new Map<string, {name: string, score: number, phone: string, timestamp: string}>()
       
       for (const scoreAnalysis of scoreAnalyses) {
         try {
@@ -101,8 +101,9 @@ function JobList() {
             const candidateData = JSON.parse(candidateAnalysis.analysis_result)
             const scoreResult = JSON.parse(scoreAnalysis.score_result)
             
-            // Extract candidate name with fallback logic
+            // Extract candidate name and phone with fallback logic
             let name = "Unknown"
+            let phone = "N/A"
             if (candidateData.name) {
               name = candidateData.name
             } else if (candidateData.candidate_name) {
@@ -112,10 +113,17 @@ function JobList() {
             } else if (candidateData.personal_info && candidateData.personal_info.name) {
               name = candidateData.personal_info.name
             }
-            
-            // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
             if (!name || name === "Unknown" || name === "N/A") {
               name = "Unnamed Candidate"
+            }
+            if (candidateData.phone) {
+              phone = candidateData.phone
+            } else if (candidateData.phone_number) {
+              phone = candidateData.phone_number
+            } else if (candidateData.contact_phone) {
+              phone = candidateData.contact_phone
+            } else if (candidateData.personal_info && candidateData.personal_info.phone) {
+              phone = candidateData.personal_info.phone
             }
             
             // Use candidate name as key to prevent duplicates
@@ -128,6 +136,7 @@ function JobList() {
               candidatesMap.set(name, {
                 name: name,
                 score: currentScore,
+                phone: phone,
                 timestamp: currentTimestamp
               })
             }
@@ -138,7 +147,7 @@ function JobList() {
       }
       
       // Convert map to array, sort by score (highest first) and take top 3
-      const candidatesWithScores = Array.from(candidatesMap.values()).map(({name, score}) => ({name, score}))
+      const candidatesWithScores = Array.from(candidatesMap.values()).map(({name, score, phone}) => ({name, score, phone}))
       const topCandidates = candidatesWithScores
         .sort((a, b) => b.score - a.score)
         .slice(0, 3)
@@ -238,9 +247,9 @@ function JobList() {
                       onCheckedChange={({ checked }) => handleSelectAll(!!checked)}
                     />
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader>ID</Table.ColumnHeader>
+                  <Table.ColumnHeader w="40px">ID</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Title</Table.ColumnHeader>
-                  <Table.ColumnHeader>Job Description</Table.ColumnHeader>
+                  <Table.ColumnHeader w="300px">Job Description</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Created Date</Table.ColumnHeader>
                   <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                   <Table.ColumnHeader>Actions</Table.ColumnHeader>
@@ -255,10 +264,12 @@ function JobList() {
                         onCheckedChange={({ checked }) => handleSelectJob(job.id, !!checked)}
                       />
                     </Table.Cell>
-                    <Table.Cell>{job.id}</Table.Cell>
+                    <Table.Cell w="40px">{job.id}</Table.Cell>
                     <Table.Cell>{job.title}</Table.Cell>
-                    <Table.Cell>
-                      {job.description || "No description"}
+                    <Table.Cell w="300px">
+                      {job.description
+                        ? job.description.split(/\s+/).slice(0, 200).join(" ") + (job.description.split(/\s+/).length > 200 ? "..." : "")
+                        : "No description"}
                     </Table.Cell>
                     <Table.Cell>
                       {new Date(job.created_at).toLocaleDateString()}
@@ -267,9 +278,12 @@ function JobList() {
                       {jobCandidates[job.id] && jobCandidates[job.id].length > 0 ? (
                         <VStack align="start" gap={1}>
                           {jobCandidates[job.id].map((candidate, index) => (
-                            <Flex key={index} gap={2} align="center">
+                            <Flex key={index} direction="column" gap={0} align="flex-start">
                               <Text fontSize="sm" fontWeight="medium">
                                 {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
+                              </Text>
+                              <Text fontSize="xs" color="gray.500">
+                                {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
                               <Badge colorScheme="green" size="sm">
                                 {candidate.score.toFixed(1)}

@@ -196,7 +196,7 @@ function JobList() {
     <Container maxW="container.xl" py={8}>
       <VStack gap={8} align="stretch">
         <Flex justifyContent="space-between" alignItems="center">
-          <Heading size="lg">Job List</Heading>
+          <Heading size="lg">Job History</Heading>
           <Flex gap={2}>
             <SearchJobs />
             <Button

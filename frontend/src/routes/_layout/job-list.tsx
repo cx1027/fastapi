@@ -99,8 +99,25 @@ function JobList() {
             const candidateData = JSON.parse(candidateAnalysis.analysis_result)
             const scoreResult = JSON.parse(scoreAnalysis.score_result)
             
+            // Extract candidate name with fallback logic
+            let name = "Unknown"
+            if (candidateData.name) {
+              name = candidateData.name
+            } else if (candidateData.candidate_name) {
+              name = candidateData.candidate_name
+            } else if (candidateData.full_name) {
+              name = candidateData.full_name
+            } else if (candidateData.personal_info && candidateData.personal_info.name) {
+              name = candidateData.personal_info.name
+            }
+            
+            // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
+            if (!name || name === "Unknown" || name === "N/A") {
+              name = "Unnamed Candidate"
+            }
+            
             candidatesWithScores.push({
-              name: candidateData.name && candidateData.name !== "Unknown" ? candidateData.name : "Unnamed Candidate",
+              name: name,
               score: scoreResult.score || 0
             })
           }

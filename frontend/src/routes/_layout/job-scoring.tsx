@@ -184,8 +184,19 @@ const JobScoring = () => {
                     )
                     const parsedId = parseInt(candidateAnalysis.id, 10)
                     
-                    // Extract candidate name with fallback to "Unnamed Candidate"
-                    let name = candidateData.name || "Unknown"
+                    // Extract candidate name with comprehensive fallback logic
+                    let name = "Unknown"
+                    if (candidateData.name) {
+                      name = candidateData.name
+                    } else if (candidateData.candidate_name) {
+                      name = candidateData.candidate_name
+                    } else if (candidateData.full_name) {
+                      name = candidateData.full_name
+                    } else if (candidateData.personal_info && candidateData.personal_info.name) {
+                      name = candidateData.personal_info.name
+                    }
+                    
+                    // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
                     if (!name || name === "Unknown" || name === "N/A") {
                       name = "Unnamed Candidate"
                     }
@@ -413,8 +424,19 @@ const JobScoring = () => {
                 )
                 const parsedId = parseInt(candidateAnalysis.id, 10)
                 
-                // Extract candidate name with fallback to "Unnamed Candidate"
-                let name = candidateData.name || "Unknown"
+                // Extract candidate name with comprehensive fallback logic
+                let name = "Unknown"
+                if (candidateData.name) {
+                  name = candidateData.name
+                } else if (candidateData.candidate_name) {
+                  name = candidateData.candidate_name
+                } else if (candidateData.full_name) {
+                  name = candidateData.full_name
+                } else if (candidateData.personal_info && candidateData.personal_info.name) {
+                  name = candidateData.personal_info.name
+                }
+                
+                // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
                 if (!name || name === "Unknown" || name === "N/A") {
                   name = "Unnamed Candidate"
                 }

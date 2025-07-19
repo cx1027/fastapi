@@ -46,7 +46,7 @@ const JobActionsMenu = ({ job }: JobActionsMenuProps) => {
             color="inherit"
             onClick={handleEdit}
           >
-            Edit
+            View
           </IconButton>
           {isDeleteOpen ? (
             <DeleteJob jobId={job.id} onClose={handleClose} />

@@ -182,16 +182,62 @@ const JobEditing = () => {
                     const candidateData = JSON.parse(
                       candidateAnalysis.analysis_result,
                     )
+                    console.log(`Analysis data for ${file.name}:`, candidateData)
+                    
+                    // Try to extract candidate information from various possible structures
+                    let name = "N/A"
+                    let email = "N/A"
+                    let phone = "N/A"
+                    
+                    // Check different possible locations for candidate info
+                    if (candidateData.name) {
+                      name = candidateData.name
+                    } else if (candidateData.candidate_name) {
+                      name = candidateData.candidate_name
+                    } else if (candidateData.full_name) {
+                      name = candidateData.full_name
+                    } else if (candidateData.personal_info && candidateData.personal_info.name) {
+                      name = candidateData.personal_info.name
+                    }
+                    
+                    if (candidateData.email) {
+                      email = candidateData.email
+                    } else if (candidateData.contact_email) {
+                      email = candidateData.contact_email
+                    } else if (candidateData.personal_info && candidateData.personal_info.email) {
+                      email = candidateData.personal_info.email
+                    }
+                    
+                    if (candidateData.phone) {
+                      phone = candidateData.phone
+                    } else if (candidateData.phone_number) {
+                      phone = candidateData.phone_number
+                    } else if (candidateData.contact_phone) {
+                      phone = candidateData.contact_phone
+                    } else if (candidateData.personal_info && candidateData.personal_info.phone) {
+                      phone = candidateData.personal_info.phone
+                    }
+                    
                     const parsedId = parseInt(candidateAnalysis.id, 10)
                     return {
                       id: Number.isNaN(parsedId) ? index + 1 : parsedId,
-                      name: candidateData.name || "N/A",
-                      email: candidateData.email || "N/A",
-                      phone: candidateData.phone || "N/A",
+                      name: name,
+                      email: email,
+                      phone: phone,
                       cv_filename: file.name,
                       created_at: new Date(
                         candidateAnalysis.created_at,
                       ).toLocaleDateString(),
+                    }
+                  } else {
+                    // Return candidate with basic info even when analysis is not available
+                    return {
+                      id: index + 1,
+                      name: "N/A",
+                      email: "N/A",
+                      phone: "N/A",
+                      cv_filename: file.name,
+                      created_at: "N/A",
                     }
                   }
                 } catch (error) {
@@ -199,15 +245,19 @@ const JobEditing = () => {
                     `Failed to fetch analysis for ${file.name}`,
                     error,
                   )
+                  // Return candidate with basic info even when analysis fails
+                  return {
+                    id: index + 1,
+                    name: "N/A",
+                    email: "N/A",
+                    phone: "N/A",
+                    cv_filename: file.name,
+                    created_at: "N/A",
+                  }
                 }
-                return null
               })
               const resolvedCandidates = await Promise.all(candidatePromises)
-              setCandidates(
-                resolvedCandidates.filter(
-                  (c): c is CandidateData => c !== null,
-                ),
-              )
+              setCandidates(resolvedCandidates)
             }
             fetchCandidates()
           }
@@ -404,16 +454,62 @@ const JobEditing = () => {
                 const candidateData = JSON.parse(
                   candidateAnalysis.analysis_result,
                 )
+                console.log(`Analysis data for ${file.name}:`, candidateData)
+                
+                // Try to extract candidate information from various possible structures
+                let name = "N/A"
+                let email = "N/A"
+                let phone = "N/A"
+                
+                // Check different possible locations for candidate info
+                if (candidateData.name) {
+                  name = candidateData.name
+                } else if (candidateData.candidate_name) {
+                  name = candidateData.candidate_name
+                } else if (candidateData.full_name) {
+                  name = candidateData.full_name
+                } else if (candidateData.personal_info && candidateData.personal_info.name) {
+                  name = candidateData.personal_info.name
+                }
+                
+                if (candidateData.email) {
+                  email = candidateData.email
+                } else if (candidateData.contact_email) {
+                  email = candidateData.contact_email
+                } else if (candidateData.personal_info && candidateData.personal_info.email) {
+                  email = candidateData.personal_info.email
+                }
+                
+                if (candidateData.phone) {
+                  phone = candidateData.phone
+                } else if (candidateData.phone_number) {
+                  phone = candidateData.phone_number
+                } else if (candidateData.contact_phone) {
+                  phone = candidateData.contact_phone
+                } else if (candidateData.personal_info && candidateData.personal_info.phone) {
+                  phone = candidateData.personal_info.phone
+                }
+                
                 const parsedId = parseInt(candidateAnalysis.id, 10)
                 return {
                   id: Number.isNaN(parsedId) ? index + 1 : parsedId,
-                  name: candidateData.name || "N/A",
-                  email: candidateData.email || "N/A",
-                  phone: candidateData.phone || "N/A",
+                  name: name,
+                  email: email,
+                  phone: phone,
                   cv_filename: file.name,
                   created_at: new Date(
                     candidateAnalysis.created_at,
                   ).toLocaleDateString(),
+                }
+              } else {
+                // Return candidate with basic info even when analysis is not available
+                return {
+                  id: index + 1,
+                  name: "N/A",
+                  email: "N/A",
+                  phone: "N/A",
+                  cv_filename: file.name,
+                  created_at: "N/A",
                 }
               }
             } catch (error) {
@@ -421,15 +517,19 @@ const JobEditing = () => {
                 `Failed to fetch analysis for ${file.name}`,
                 error,
               )
+              // Return candidate with basic info even when analysis fails
+              return {
+                id: index + 1,
+                name: "N/A",
+                email: "N/A",
+                phone: "N/A",
+                cv_filename: file.name,
+                created_at: "N/A",
+              }
             }
-            return null
           })
           const resolvedCandidates = await Promise.all(candidatePromises)
-          setCandidates(
-            resolvedCandidates.filter(
-              (c): c is CandidateData => c !== null,
-            ),
-          )
+          setCandidates(resolvedCandidates)
         }
         fetchCandidates()
       }
@@ -1010,9 +1110,14 @@ const JobEditing = () => {
                       <Table.Cell>{candidate.id}</Table.Cell>
                       <Table.Cell>{candidate.name}</Table.Cell>
                       <Table.Cell>
-                        <Text maxW="120px" whiteSpace="normal" wordBreak="break-all">
-                          {candidate.email} / {candidate.phone}
-                        </Text>
+                        <VStack align="start" gap={1} maxW="120px">
+                          <Text fontSize="sm" whiteSpace="normal" wordBreak="break-all">
+                            {candidate.email}
+                          </Text>
+                          <Text fontSize="sm" whiteSpace="normal" wordBreak="break-all">
+                            {candidate.phone}
+                          </Text>
+                        </VStack>
                       </Table.Cell>
                       <Table.Cell>
                         <Text maxW="100px" whiteSpace="normal" wordBreak="break-all">

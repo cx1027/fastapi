@@ -183,9 +183,16 @@ const JobScoring = () => {
                       candidateAnalysis.analysis_result,
                     )
                     const parsedId = parseInt(candidateAnalysis.id, 10)
+                    
+                    // Extract candidate name with fallback to "Unnamed Candidate"
+                    let name = candidateData.name || "Unknown"
+                    if (!name || name === "Unknown" || name === "N/A") {
+                      name = "Unnamed Candidate"
+                    }
+                    
                     return {
                       id: Number.isNaN(parsedId) ? index + 1 : parsedId,
-                      name: candidateData.name || "N/A",
+                      name: name,
                       email: candidateData.email || "N/A",
                       phone: candidateData.phone || "N/A",
                       cv_filename: file.name,
@@ -405,9 +412,16 @@ const JobScoring = () => {
                   candidateAnalysis.analysis_result,
                 )
                 const parsedId = parseInt(candidateAnalysis.id, 10)
+                
+                // Extract candidate name with fallback to "Unnamed Candidate"
+                let name = candidateData.name || "Unknown"
+                if (!name || name === "Unknown" || name === "N/A") {
+                  name = "Unnamed Candidate"
+                }
+                
                 return {
                   id: Number.isNaN(parsedId) ? index + 1 : parsedId,
-                  name: candidateData.name || "N/A",
+                  name: name,
                   email: candidateData.email || "N/A",
                   phone: candidateData.phone || "N/A",
                   cv_filename: file.name,

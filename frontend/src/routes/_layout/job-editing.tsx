@@ -185,7 +185,7 @@ const JobEditing = () => {
                     console.log(`Analysis data for ${file.name}:`, candidateData)
                     
                     // Try to extract candidate information from various possible structures
-                    let name = "N/A"
+                    let name = "Unknown"
                     let email = "N/A"
                     let phone = "N/A"
                     
@@ -198,6 +198,11 @@ const JobEditing = () => {
                       name = candidateData.full_name
                     } else if (candidateData.personal_info && candidateData.personal_info.name) {
                       name = candidateData.personal_info.name
+                    }
+                    
+                    // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
+                    if (!name || name === "Unknown" || name === "N/A") {
+                      name = "Unnamed Candidate"
                     }
                     
                     if (candidateData.email) {
@@ -233,7 +238,7 @@ const JobEditing = () => {
                     // Return candidate with basic info even when analysis is not available
                     return {
                       id: index + 1,
-                      name: "N/A",
+                      name: "Unnamed Candidate",
                       email: "N/A",
                       phone: "N/A",
                       cv_filename: file.name,
@@ -248,7 +253,7 @@ const JobEditing = () => {
                   // Return candidate with basic info even when analysis fails
                   return {
                     id: index + 1,
-                    name: "N/A",
+                    name: "Unnamed Candidate",
                     email: "N/A",
                     phone: "N/A",
                     cv_filename: file.name,
@@ -457,7 +462,7 @@ const JobEditing = () => {
                 console.log(`Analysis data for ${file.name}:`, candidateData)
                 
                 // Try to extract candidate information from various possible structures
-                let name = "N/A"
+                let name = "Unknown"
                 let email = "N/A"
                 let phone = "N/A"
                 
@@ -470,6 +475,11 @@ const JobEditing = () => {
                   name = candidateData.full_name
                 } else if (candidateData.personal_info && candidateData.personal_info.name) {
                   name = candidateData.personal_info.name
+                }
+                
+                // If name is still "Unknown" or empty, set it to "Unnamed Candidate"
+                if (!name || name === "Unknown" || name === "N/A") {
+                  name = "Unnamed Candidate"
                 }
                 
                 if (candidateData.email) {
@@ -505,7 +515,7 @@ const JobEditing = () => {
                 // Return candidate with basic info even when analysis is not available
                 return {
                   id: index + 1,
-                  name: "N/A",
+                  name: "Unnamed Candidate",
                   email: "N/A",
                   phone: "N/A",
                   cv_filename: file.name,
@@ -520,7 +530,7 @@ const JobEditing = () => {
               // Return candidate with basic info even when analysis fails
               return {
                 id: index + 1,
-                name: "N/A",
+                name: "Unnamed Candidate",
                 email: "N/A",
                 phone: "N/A",
                 cv_filename: file.name,

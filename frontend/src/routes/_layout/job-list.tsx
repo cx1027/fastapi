@@ -100,7 +100,7 @@ function JobList() {
             const scoreResult = JSON.parse(scoreAnalysis.score_result)
             
             candidatesWithScores.push({
-              name: candidateData.name || "Unknown",
+              name: candidateData.name && candidateData.name !== "Unknown" ? candidateData.name : "Unnamed Candidate",
               score: scoreResult.score || 0
             })
           }
@@ -240,7 +240,7 @@ function JobList() {
                           {jobCandidates[job.id].map((candidate, index) => (
                             <Flex key={index} gap={2} align="center">
                               <Text fontSize="sm" fontWeight="medium">
-                                {candidate.name}
+                                {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
                               </Text>
                               <Badge colorScheme="green" size="sm">
                                 {candidate.score.toFixed(1)}

@@ -128,7 +128,7 @@ function JobList() {
         <Flex justifyContent="space-between" alignItems="center">
           <Heading size="lg">Edit Job List</Heading>
           <Flex gap={2}>
-            <SearchJobs />
+            <SearchJobs route="/_layout/job-editing-list" />
             <Button
               colorScheme="red"
               onClick={() => deleteMutation.mutate(selectedJobs)}

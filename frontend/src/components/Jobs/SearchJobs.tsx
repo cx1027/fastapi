@@ -23,11 +23,15 @@ interface SearchForm {
   created_date?: string
 }
 
-const SearchJobs = () => {
+interface SearchJobsProps {
+  route?: string
+}
+
+const SearchJobs = ({ route = "/_layout/job-list" }: SearchJobsProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const navigate = useNavigate({ from: "/_layout/job-list" })
+  const navigate = useNavigate({ from: route })
   const search = useSearch({
-    from: "/_layout/job-list",
+    from: route,
   })
   const { page, title, description, created_date } = search
 

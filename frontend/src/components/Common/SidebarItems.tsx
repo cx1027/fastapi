@@ -13,7 +13,7 @@ export const sidebarItems = [
   { icon: FiHome, title: "Dashboard", path: "/" },
   { icon: FiFileText, title: "Job List", path: "/job-list" },
   { icon: FiClipboard, title: "New Job Score", path: "/job-scoring" },
-  { icon: FiEdit, title: "Edit Job Score", path: "/job-editing" },
+  { icon: FiEdit, title: "Edit Job Score", path: "/job-editing-list" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 
@@ -32,12 +32,6 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
   const queryClient = useQueryClient()
   const currentUser = queryClient.getQueryData<UserPublic>(["currentUser"])
   const router = useRouter()
-  // Use useSyncExternalStore to subscribe to router state changes
-  const currentPath = useSyncExternalStore(
-    (cb) => router.subscribe(() => cb()),
-    () => router.state.location.pathname,
-    () => "/"
-  )
 
   const finalItems: Item[] = currentUser?.is_superuser
     ? [...sidebarItems, { icon: FiUsers, title: "Admin", path: "/admin" }]

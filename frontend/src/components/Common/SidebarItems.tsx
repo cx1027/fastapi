@@ -1,6 +1,6 @@
 import { Box, Flex, Icon, Text } from "@chakra-ui/react"
 import { useQueryClient } from "@tanstack/react-query"
-import { Link as RouterLink } from "@tanstack/react-router"
+import { Link as RouterLink, useMatchRoute } from "@tanstack/react-router"
 import { FiBriefcase, FiFileText, FiHome, FiSettings, FiUsers, FiClipboard, FiEdit } from "react-icons/fi"
 import type { IconType } from "react-icons/lib"
 import { useSearch } from "@tanstack/react-router"
@@ -43,11 +43,16 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
     ? [...sidebarItems, { icon: FiUsers, title: "Admin", path: "/admin" }]
     : sidebarItems
 
-  const listItems = finalItems.map(({ icon, title, path }) => {
-    const isActive =
-      path === "/"
-        ? currentPath === "/"
-        : currentPath === path || currentPath.startsWith(path + "/") || currentPath.startsWith(path + "?")
+    const matchRoute = useMatchRoute();
+
+    const listItems = finalItems.map(({ icon, title, path }) => {
+    // Highlight Job List for /job-list and /job-edit
+    let isActive = false;
+    if (path === "/job-list") {
+    isActive = !!matchRoute({ to: "/job-list", fuzzy: true }) || !!matchRoute({ to: "/job-edit", fuzzy: true });
+    } else {
+    isActive = !!matchRoute({ to: path, fuzzy: true });
+    }
     return (
       <RouterLink key={title} to={path} onClick={onClose} style={{ display: 'block' }}>
         <Flex
@@ -55,21 +60,22 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
           px={compact ? 0 : 4}
           py={2}
           justifyContent="center"
-          _hover={{
-            background: "gray.subtle",
-          }}
           alignItems="center"
           fontSize="xl"
           flexDirection="column"
-          bg={isActive ? "blue.100" : undefined}
-          fontWeight={isActive ? "bold" : undefined}
+          bg={isActive ? "gray.700" : undefined}
+          color={isActive ? "white" : undefined}
+          _hover={{
+            background: isActive ? "gray.700" : "gray.subtle",
+          }}
+          borderRadius="md"
         >
           <Icon as={icon} alignSelf="center" boxSize={6} />
           {!compact && <Text ml={2} fontSize="sm">{title}</Text>}
         </Flex>
       </RouterLink>
-    )
-  })
+    );
+  });
 
   return (
     <>
@@ -78,7 +84,7 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
           Menu
         </Text>
       )}
-      <Box key={currentPath}>{listItems}</Box>
+      <Box>{listItems}</Box>
     </>
   )
 }

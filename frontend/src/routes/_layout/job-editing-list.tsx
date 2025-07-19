@@ -247,9 +247,9 @@ function JobList() {
                       onCheckedChange={({ checked }) => handleSelectAll(!!checked)}
                     />
                   </Table.ColumnHeader>
-                  <Table.ColumnHeader w="40px">ID</Table.ColumnHeader>
+                  <Table.ColumnHeader>ID</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Title</Table.ColumnHeader>
-                  <Table.ColumnHeader w="300px">Job Description</Table.ColumnHeader>
+                  <Table.ColumnHeader>Job Description</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Created Date</Table.ColumnHeader>
                   <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                   <Table.ColumnHeader>Actions</Table.ColumnHeader>

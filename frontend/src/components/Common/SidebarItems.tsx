@@ -11,9 +11,8 @@ import type { UserPublic } from "@/client"
 
 export const sidebarItems = [
   { icon: FiHome, title: "Dashboard", path: "/" },
-  { icon: FiFileText, title: "Job History", path: "/job-list" },
+  { icon: FiEdit, title: "Job History", path: "/job-editing-list" },
   { icon: FiClipboard, title: "New Job Score", path: "/job-scoring" },
-  { icon: FiEdit, title: "Edit Job Score", path: "/job-editing-list" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]
 

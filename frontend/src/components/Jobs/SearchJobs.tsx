@@ -27,7 +27,7 @@ interface SearchJobsProps {
   route?: string
 }
 
-const SearchJobs = ({ route = "/_layout/job-list" }: SearchJobsProps) => {
+const SearchJobs = ({ route = "/_layout/job-editing-list" }: SearchJobsProps) => {
   const [isOpen, setIsOpen] = useState(false)
   const navigate = useNavigate({ from: route })
   const search = useSearch({

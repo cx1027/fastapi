@@ -84,8 +84,10 @@ function JobList() {
 
   // Function to fetch top 3 candidates with scores for a job
   const fetchJobCandidates = async (jobId: string) => {
+    console.log("fetchJobCandidates called for jobId:", jobId)
     try {
       const scoreAnalyses = await ScoreService.getScoreAnalysisByJob({ jobId })
+      console.log("scoreAnalyses raw:", scoreAnalyses)
       const candidatesMap = new Map<string, {name: string, score: number, timestamp: string}>()
       
       for (const scoreAnalysis of scoreAnalyses) {

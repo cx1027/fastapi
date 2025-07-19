@@ -862,20 +862,24 @@ const JobScoring = () => {
         {/* Files Section */}
         <VStack align="stretch">
           <Heading size="md">Candidates</Heading>
-          <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
-            Search
-          </Button>
-          <Button
-            size="sm"
-            colorScheme="red"
-            alignSelf="start"
-            mb={2}
-            ml={2}
-            onClick={handleDeleteSelectedCandidates}
-            disabled={selectedCandidateIds.length === 0}
-          >
-            Delete Selected ({selectedCandidateIds.length})
-          </Button>
+          {jobId && (
+            <>
+              <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
+                Search
+              </Button>
+              <Button
+                size="sm"
+                colorScheme="red"
+                alignSelf="start"
+                mb={2}
+                ml={2}
+                onClick={handleDeleteSelectedCandidates}
+                disabled={selectedCandidateIds.length === 0}
+              >
+                Delete Selected ({selectedCandidateIds.length})
+              </Button>
+            </>
+          )}
           {showCandidateSearch && (
             <Box mb={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">
               <VStack gap={2} align="stretch">

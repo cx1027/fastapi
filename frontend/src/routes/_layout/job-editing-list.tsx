@@ -256,7 +256,7 @@ function JobList() {
                 </Table.Row>
               </Table.Header>
               <Table.Body>
-                {jobsData.data.map((job) => (
+                {jobsData.data.map((job, index) => (
                   <Table.Row key={job.id}>
                     <Table.Cell>
                       <Checkbox
@@ -264,7 +264,7 @@ function JobList() {
                         onCheckedChange={({ checked }) => handleSelectJob(job.id, !!checked)}
                       />
                     </Table.Cell>
-                    <Table.Cell>{job.id}</Table.Cell>
+                    <Table.Cell>{index + 1}</Table.Cell>
                     <Table.Cell>{job.title}</Table.Cell>
                     <Table.Cell>
                       {job.description

@@ -282,7 +282,7 @@ function JobList() {
                               <Text fontSize="sm" fontWeight="medium">
                                 {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
                               </Text>
-                              <Text fontSize="sm">
+                              <Text color="gray.500" fontSize="sm">
                                 {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
                               <Badge colorScheme="green" size="sm">

@@ -279,10 +279,10 @@ function JobList() {
                         <VStack align="start" gap={1}>
                           {jobCandidates[job.id].map((candidate, index) => (
                             <Flex key={index} gap={2} align="center">
-                              <Text fontSize="sm" fontWeight="medium">
+                              <Text fontSize="sm">
                                 {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
                               </Text>
-                              <Text color="gray.500" fontSize="sm">
+                              <Text color="gray.500">
                                 {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
                               <Badge colorScheme="green" size="sm">

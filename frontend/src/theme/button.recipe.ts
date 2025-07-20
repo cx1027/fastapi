@@ -6,9 +6,7 @@ export const buttonRecipe = defineRecipe({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    colorPalette: "yellow",
-    bg: "ui.main",
-    color: "white",
+    colorPalette: "customYellow",
   },
   variants: {
     variant: {

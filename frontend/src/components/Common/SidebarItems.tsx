@@ -39,12 +39,12 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
     const matchRoute = useMatchRoute();
 
     const listItems = finalItems.map(({ icon, title, path }) => {
-    // Highlight Job List for /job-list and /job-edit
+    // Highlight Job History for /job-editing-list and /job-editing
     let isActive = false;
-    if (path === "/job-list") {
-    isActive = !!matchRoute({ to: "/job-list", fuzzy: true }) || !!matchRoute({ to: "/job-edit", fuzzy: true });
+    if (path === "/job-editing-list") {
+      isActive = !!matchRoute({ to: "/job-editing-list", fuzzy: true }) || !!matchRoute({ to: "/job-editing", fuzzy: true });
     } else {
-    isActive = !!matchRoute({ to: path, fuzzy: true });
+      isActive = !!matchRoute({ to: path, fuzzy: true });
     }
     return (
       <RouterLink key={title} to={path} onClick={onClose} style={{ display: 'block' }}>

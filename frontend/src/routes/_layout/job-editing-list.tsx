@@ -251,7 +251,7 @@ function JobList() {
                   <Table.ColumnHeader>ID</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Title</Table.ColumnHeader>
                   <Table.ColumnHeader>Job Description</Table.ColumnHeader>
-                  <Table.ColumnHeader>Job Created Date</Table.ColumnHeader>
+                  <Table.ColumnHeader>Created Date</Table.ColumnHeader>
                   <Table.ColumnHeader>Candidates</Table.ColumnHeader>
                   <Table.ColumnHeader>Actions</Table.ColumnHeader>
                 </Table.Row>
@@ -280,13 +280,16 @@ function JobList() {
                         <VStack align="start" gap={1}>
                           {jobCandidates[job.id].map((candidate, index) => (
                             <Flex key={index} gap={2} align="center">
-                              <Text fontSize="sm">
+                              <Text fontSize = "small">
                                 {candidate.name && candidate.name !== "Unknown" ? candidate.name : "Unnamed Candidate"}
                               </Text>
-                              <Text color="gray.500">
+                              {/* <Text color="gray.500">
+                                {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"} */}
+                              <Text fontSize = "small" color="gray.500" whiteSpace="normal" wordBreak="break-all" fontFamily="monospace" minW="100px">
                                 {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
-                              <Badge bg="ui.main" color="white" size="sm">
+                              {/* <Badge bg="ui.main" color="white" size="sm"> */}
+                              <Badge bg="gray.400" color="white" size="sm">
                                 {candidate.score.toFixed(1)}
                               </Badge>
                             </Flex>

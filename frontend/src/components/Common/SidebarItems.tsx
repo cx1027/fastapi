@@ -56,15 +56,19 @@ const SidebarItems = ({ onClose, compact = false }: SidebarItemsProps) => {
           alignItems="center"
           fontSize="xl"
           flexDirection="column"
-          bg={isActive ? "gray.700" : undefined}
-          color={isActive ? "white" : undefined}
+          bg={isActive ? "gray.100" : undefined}
+          color={isActive ? "black" : undefined}
           _hover={{
-            background: isActive ? "gray.700" : "gray.subtle",
+            background: isActive ? "gray.100" : "gray.subtle",
           }}
           borderRadius="md"
         >
           <Icon as={icon} alignSelf="center" boxSize={6} />
-          {!compact && <Text ml={2} fontSize="sm">{title}</Text>}
+          {!compact && (
+            <Text ml={2} fontSize="sm" fontWeight={isActive ? "bold" : undefined}>
+              {title}
+            </Text>
+          )}
         </Flex>
       </RouterLink>
     );

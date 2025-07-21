@@ -95,10 +95,11 @@
     .bmc-fixed {
       position: fixed;
       top: 24px;
-      right: 400px;
+      right: 300px;
       z-index: 1000;
       display: flex;
       align-items: center;
+      text-decoration: none;
     }
     .bmc-fixed img {
       height: 56px;
@@ -137,11 +138,13 @@
       }
     }
   </style>
+  <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Buy Me a Coffee Icon Fixed Top Right -->
-  <a class="bmc-fixed" href="https://www.buymeacoffee.com/appcraftconsulting" target="_blank" aria-label="Buy Me a Coffee">
-    <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy me a coffee" class="bmc-icon" />
+  <a class="bmc-fixed" href="https://buymeacoffee.com/surecheng" target="_blank" aria-label="Buy Me a Coffee" style="text-decoration: none; ">
+    <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy me a coffee" class="bmc-icon" style="margin-right: 8px;"/>
+    <span style="font-family: 'Indie Flower', cursive; color: black;">Buy me a coffee</span>
   </a>
   <header>
     <div class="logo">ransky.ai</div>
@@ -154,7 +157,7 @@
       </div>
       <p class="desc">
         <strong>Ransky</strong> is an <span style="color:#111;">AI Resume ranking tool</span> designed to streamline your recruitment process.<br>
-        Seamlessly discover the best talent in your applicant pool, faster and smarter.
+        Seamlessly discover the best talent in your applicant pool, faster and smarter. Instantly upload CVs, enter job details, and see ranked candidates at a glance—no manual review needed.
       </p>
       <a href="https://ransky.ai/register" class="register-btn">Register Now</a>
     </section>

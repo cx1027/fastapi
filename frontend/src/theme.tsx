@@ -54,7 +54,8 @@ export const system = createSystem(defaultConfig, {
       colors: {
         brand: {
           solid: { value: "{colors.brand.500}" },
-          contrast: { value: "#D7D7D7" },
+          // contrast: { value: "#D7D7D7" },
+          contrast: { value: "white" },
           fg: { value: "{colors.brand.700}" },
           muted: { value: "{colors.brand.100}" },
           subtle: { value: "{colors.brand.200}" },

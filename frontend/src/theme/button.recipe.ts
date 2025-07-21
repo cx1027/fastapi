@@ -6,7 +6,17 @@ export const buttonRecipe = defineRecipe({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    colorPalette: "teal",
+    // colorPalette: "teal",
+    bg:"button.bg",
+    color:"button.text",
+    _hover:{
+      bg:"button.bg",
+      color:"button.text",
+    },
+    _active:{
+      bg:"button.bg",
+      color:"button.text",
+    }
   },
   variants: {
     variant: {

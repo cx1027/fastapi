@@ -221,7 +221,8 @@ function JobList() {
           <Flex gap={2}>
             <SearchJobs />
             <Button
-              colorScheme="red"
+              bg="ui.main"
+              color="white"
               onClick={() => deleteMutation.mutate(selectedJobs)}
               disabled={selectedJobs.length === 0 || deleteMutation.isPending}
               loading={deleteMutation.isPending}
@@ -285,7 +286,7 @@ function JobList() {
                               <Text color="gray.500">
                                 {candidate.phone && candidate.phone !== "N/A" ? candidate.phone : "No phone"}
                               </Text>
-                              <Badge colorScheme="green" size="sm">
+                              <Badge bg="ui.main" color="white" size="sm">
                                 {candidate.score.toFixed(1)}
                               </Badge>
                             </Flex>

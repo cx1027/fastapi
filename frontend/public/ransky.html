@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Ransky.ai — AI Resume Ranking Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      background: #fff;
+      color: #111;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 18px;
+      line-height: 1.6;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .main-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+    }
+
+    header {
+      width: 100vw;
+      padding: 2rem 0 0 0;
+      text-align: left;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .logo {
+      font-weight: 900;
+      font-size: 2rem;
+      letter-spacing: 0.05em;
+      color: #111;
+      margin-bottom: 0.5rem;
+    }
+
+    .hero {
+      max-width: 700px;
+      margin: 2.5rem auto 0 auto;
+      padding: 0 1.5rem;
+      text-align: left;
+      background: #fff;
+    }
+
+    .slogan {
+      font-size: 2.1rem;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: -1px;
+      margin-bottom: 1rem;
+      line-height: 1.15;
+    }
+
+    .desc {
+      color: #444;
+      font-size: 1.15rem;
+      margin-bottom: 2.5rem;
+      margin-top: 0.5rem;
+      max-width: 480px;
+    }
+
+    .register-btn {
+      display: inline-block;
+      padding: 0.88em 2.2em;
+      font-size: 1.15rem;
+      font-weight: 700;
+      border-radius: 2em;
+      background: #111;
+      color: #fff;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+      letter-spacing: 0.01em;
+      box-shadow: 0 3px 12px rgba(40,40,40,0.03);
+      border: none;
+    }
+    .register-btn:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    /* === Buy Me a Coffee Fixed Icon === */
+    .bmc-fixed {
+      position: fixed;
+      top: 24px;
+      right: 300px;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      text-decoration: none;
+    }
+    .bmc-fixed img {
+      height: 56px;
+      width: auto;
+      display: block;
+      box-shadow: 0 4px 18px rgba(40,40,40,0.11);
+      border-radius: 12px;
+      background: #fff;
+      transition: box-shadow 0.2s;
+    }
+    .bmc-fixed img:hover {
+      box-shadow: 0 8px 24px rgba(40,40,40,0.21);
+    }
+
+    footer {
+      text-align: center;
+      color: #aaa;
+      font-size: 0.95em;
+      letter-spacing: 0.06em;
+      padding: 2.5rem 0 1.25rem 0;
+    }
+
+    @media (max-width:600px) {
+      .slogan {
+        font-size: 1.35rem;
+      }
+      .hero {
+        padding: 0 .85rem;
+      }
+      .bmc-fixed img {
+        height: 40px;
+      }
+      .bmc-fixed {
+        top: 12px;
+        right: 10px;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Buy Me a Coffee Icon Fixed Top Right -->
+  <a class="bmc-fixed" href="https://buymeacoffee.com/surecheng" target="_blank" aria-label="Buy Me a Coffee" style="text-decoration: none; ">
+    <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" alt="Buy me a coffee" class="bmc-icon" style="margin-right: 8px;"/>
+    <span style="font-family: 'Indie Flower', cursive; color: black;">Buy me a coffee</span>
+  </a>
+  <header>
+    <img src="../assets/images/fastapi-logo11.svg" alt="Ransky Logo" class="logo" style="height: 48px;" />
+  </header>
+  <main class="main-wrapper">
+    <section class="hero">
+      <div class="slogan">
+        Make hiring effortless.<br>
+        <span style="color:#888;font-weight:400;">— Powered by AI</span>
+      </div>
+      <p class="desc">
+        <strong>Ransky</strong> is an <span style="color:#111;">AI Resume ranking tool</span> designed to streamline your recruitment process.<br>
+        Seamlessly discover the best talent in your applicant pool, faster and smarter. Instantly upload CVs, enter job details, and see ranked candidates at a glance—no manual review needed.
+      </p>
+      <a href="https://ransky.ai/register" class="register-btn">Register Now</a>
+    </section>
+  </main>
+  <footer>
+    &copy; 2025 Ransky.ai &middot; Crafted in Auckland, New Zealand
+  </footer>
+</body>
+</html>

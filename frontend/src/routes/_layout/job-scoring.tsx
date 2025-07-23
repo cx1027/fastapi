@@ -944,22 +944,20 @@ const JobScoring = () => {
         <VStack align="stretch">
           <Heading size="md">Candidates</Heading>
           {jobId && (
-            <>
-              <Button size="sm" colorScheme="blue" alignSelf="start" mb={2} onClick={() => setShowCandidateSearch((v) => !v)}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+              <Button size="sm" colorScheme="blue" alignSelf="start" onClick={() => setShowCandidateSearch((v) => !v)}>
                 Search
               </Button>
               <Button
                 size="sm"
                 colorScheme="red"
                 alignSelf="start"
-                mb={2}
-                ml={2}
                 onClick={handleDeleteSelectedCandidates}
                 disabled={selectedCandidateIds.length === 0}
               >
                 Delete Selected ({selectedCandidateIds.length})
               </Button>
-            </>
+            </Box>
           )}
           {showCandidateSearch && (
             <Box mb={4} p={4} borderWidth="1px" borderRadius="md" bg="gray.50">

@@ -12,6 +12,7 @@ import type { UserPublic } from "@/client"
 export const sidebarItems = [
   { icon: FiHome, title: "Dashboard", path: "/" },
   { icon: FiEdit, title: "Job History", path: "/job-editing-list" },
+  // Always navigate to /job-scoring with no jobId for a new job score
   { icon: FiClipboard, title: "New Job Score", path: "/job-scoring" },
   { icon: FiSettings, title: "User Settings", path: "/settings" },
 ]

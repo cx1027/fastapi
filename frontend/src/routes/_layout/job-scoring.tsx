@@ -1103,116 +1103,110 @@ const JobScoring = () => {
                 </Table.Header>
                 <Table.Body>
                   {filteredCandidates.map((candidate) => (
-                    <React.Fragment key={candidate.id}>
-                      <Table.Row>
-                        <Table.Cell>
-                          <input
-                            type="checkbox"
-                            checked={selectedCandidateIds.includes(candidate.id)}
-                            onChange={e => handleSelectCandidate(candidate.id, e.target.checked)}
-                          />
-                        </Table.Cell>
-                        <Table.Cell>{candidate.id}</Table.Cell>
-                        <Table.Cell>{candidate.name}</Table.Cell>
-                        <Table.Cell>
-                          <Text maxW="120px" whiteSpace="normal" wordBreak="break-all">
-                            {candidate.email} / {candidate.phone}
-                          </Text>
-                        </Table.Cell>
-                        <Table.Cell>
-                          <Text maxW="100px" whiteSpace="normal" wordBreak="break-all">
-                            {candidate.cv_filename}
-                          </Text>
-                        </Table.Cell>
-                        <Table.Cell>{candidate.created_at}</Table.Cell>
-                        {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
-                          <>
-                            <Table.Cell>
-                              {analysisScoreResult[candidate.cv_filename] ? (
-                                <Text fontWeight="bold" color="blue.600">
-                                  {typeof analysisScoreResult[candidate.cv_filename].score === 'number' 
-                                    ? analysisScoreResult[candidate.cv_filename].score.toFixed(1)
-                                    : analysisScoreResult[candidate.cv_filename].score}
-                                </Text>
-                              ) : (
-                                <Text color="gray.500">N/A</Text>
-                              )}
-                            </Table.Cell>
-                            <Table.Cell>
-                              {analysisScoreResult[candidate.cv_filename]?.summary_comment ? (
-                                <Text fontSize="sm" whiteSpace="pre-wrap">
-                                  {analysisScoreResult[candidate.cv_filename].summary_comment}
-                                </Text>
-                              ) : (
-                                <Text color="gray.500" fontSize="sm">N/A</Text>
-                              )}
-                            </Table.Cell>
-                          </>
-                        )}
-                        <Table.Cell>
-                          <HStack>
-                            <Button
-                              size="sm"
-                              colorScheme="blue"
-                              onClick={() =>
-                                handleFileDetailsClick({
-                                  id: candidate.id,
-                                  name: candidate.cv_filename,
-                                })
-                              }
-                              loading={
-                                isLoadingFileAnalysis &&
-                                selectedFile?.id === candidate.id
-                              }
-                            >
-                              Candidate
-                            </Button>
-                            {analysisRun &&
-                              analysisScoreResult[candidate.cv_filename] && (
-                                <Button
-                                  size="sm"
-                                  colorScheme="teal"
-                                  onClick={() => {
-                                    setSelectedFile({
-                                      id: candidate.id,
-                                      name: candidate.cv_filename,
-                                    })
-                                    setIsAnalysisDetailsOpen(true)
-                                  }}
-                                >
-                                  Score
-                                </Button>
-                              )}
-                          </HStack>
-                        </Table.Cell>
-                        <Table.Cell>
+                    <Table.Row key={candidate.id}>
+                      <Table.Cell>
+                        <input
+                          type="checkbox"
+                          checked={selectedCandidateIds.includes(candidate.id)}
+                          onChange={e => handleSelectCandidate(candidate.id, e.target.checked)}
+                        />
+                      </Table.Cell>
+                      <Table.Cell>{candidate.id}</Table.Cell>
+                      <Table.Cell>{candidate.name}</Table.Cell>
+                      <Table.Cell>
+                        <Text maxW="120px" whiteSpace="normal" wordBreak="break-all">
+                          {candidate.email} / {candidate.phone}
+                        </Text>
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Text maxW="100px" whiteSpace="normal" wordBreak="break-all">
+                          {candidate.cv_filename}
+                        </Text>
+                      </Table.Cell>
+                      <Table.Cell>{candidate.created_at}</Table.Cell>
+                      {analysisRun && Object.keys(analysisScoreResult).length > 0 && (
+                        <>
+                          <Table.Cell>
+                            {analysisScoreResult[candidate.cv_filename] ? (
+                              <Text fontWeight="bold" color="blue.600">
+                                {typeof analysisScoreResult[candidate.cv_filename].score === 'number' 
+                                  ? analysisScoreResult[candidate.cv_filename].score.toFixed(1)
+                                  : analysisScoreResult[candidate.cv_filename].score}
+                              </Text>
+                            ) : (
+                              <Text color="gray.500">N/A</Text>
+                            )}
+                          </Table.Cell>
+                          <Table.Cell>
+                            {analysisScoreResult[candidate.cv_filename]?.summary_comment ? (
+                              <Text fontSize="sm" whiteSpace="pre-wrap">
+                                {analysisScoreResult[candidate.cv_filename].summary_comment}
+                              </Text>
+                            ) : (
+                              <Text color="gray.500" fontSize="sm">N/A</Text>
+                            )}
+                          </Table.Cell>
+                        </>
+                      )}
+                      <Table.Cell>
+                        <HStack>
                           <Button
                             size="sm"
-                            colorScheme="red"
-                            onClick={() => handleDeleteSingleCandidate(candidate.id)}
+                            colorScheme="blue"
+                            onClick={() =>
+                              handleFileDetailsClick({
+                                id: candidate.id,
+                                name: candidate.cv_filename,
+                              })
+                            }
+                            loading={
+                              isLoadingFileAnalysis &&
+                              selectedFile?.id === candidate.id
+                            }
                           >
-                            Delete
+                            Candidate
                           </Button>
-                        </Table.Cell>
-                      </Table.Row>
-                      {runAnalysisMutation.isPending && (
-                        <Table.Row>
-                          <Table.Cell colSpan={10} style={{ padding: 0, background: 'transparent' }}>
-                            <Box mt={1} mb={1} minW="200px">
-                              <Box
-                                as="progress"
-                                value={analysisFileProgress[candidate.cv_filename] || 0}
-                                max={100}
-                                style={{ width: '100%', height: '8px', accentColor: 'var(--chakra-colors-green-500)' }}
-                              />
-                              <Text fontSize="xs" color="gray.500" textAlign="right">
-                                {analysisFileProgress[candidate.cv_filename] || 0}%
-                              </Text>
-                            </Box>
-                          </Table.Cell>
-                        </Table.Row>
-                      )}
-                    </React.Fragment>
+                          {analysisRun &&
+                            analysisScoreResult[candidate.cv_filename] && (
+                              <Button
+                                size="sm"
+                                colorScheme="teal"
+                                onClick={() => {
+                                  setSelectedFile({
+                                    id: candidate.id,
+                                    name: candidate.cv_filename,
+                                  })
+                                  setIsAnalysisDetailsOpen(true)
+                                }}
+                              >
+                                Score
+                              </Button>
+                            )}
+                        </HStack>
+                        {/* Progress bar for Run Analysis, inside Details column */}
+                        {runAnalysisMutation.isPending && (
+                          <Box mt={1} minW="200px">
+                            <progress
+                              value={analysisFileProgress[candidate.cv_filename] || 0}
+                              max={100}
+                              style={{ width: '100%', height: '8px', accentColor: 'var(--chakra-colors-green-500)' }}
+                            />
+                            <Text fontSize="xs" color="gray.500" textAlign="right">
+                              {analysisFileProgress[candidate.cv_filename] || 0}%
+                            </Text>
+                          </Box>
+                        )}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Button
+                          size="sm"
+                          colorScheme="red"
+                          onClick={() => handleDeleteSingleCandidate(candidate.id)}
+                        >
+                          Delete
+                        </Button>
+                      </Table.Cell>
+                    </Table.Row>
                   ))}
                 </Table.Body>
               </Table.Root>

@@ -58,7 +58,7 @@ class Settings(BaseSettings):
     POSTGRES_DB: str = ""
 
     # Remove the decorators below; make this a plain class variable
-    SQLALCHEMY_DATABASE_URI: str = 'postgresql://neondb_owner:npg_dAMRN5epbzZ7@ep-twilight-violet-a85x45e2-pooler.eastus2.azure.neon.tech/neondb?ssl=require&channel_binding=require'
+    SQLALCHEMY_DATABASE_URI: str = 'postgresql://neondb_owner:npg_dAMRN5epbzZ7@ep-twilight-violet-a85x45e2-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require'
     # def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
     #     return MultiHostUrl.build(
     #         scheme="postgresql+psycopg2",

@@ -11,6 +11,7 @@ import {
   Text,
   Box,
   Badge,
+  Progress,
 } from "@chakra-ui/react"
 import { createFileRoute, useNavigate } from "@tanstack/react-router"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
@@ -35,6 +36,7 @@ import { handleError } from "@/utils"
 import type { ApiError } from "@/client/core/ApiError"
 import 'react-quill/dist/quill.snow.css'
 import DOMPurify from 'dompurify'
+import axios from "axios";
 
 interface CandidateData {
   id: number
@@ -83,6 +85,8 @@ const JobScoring = () => {
   const [analysisScoreResult, setAnalysisScoreResult] = useState<Record<string, AnalysisResult>>({})
   const [isAnalysisDetailsOpen, setIsAnalysisDetailsOpen] = useState(false)
   const { showSuccessToast } = useCustomToast()
+  const [fileUploadProgress, setFileUploadProgress] = useState<{ [id: number]: number }>({});
+  const [isUploading, setIsUploading] = useState(false);
 
   // Search/filter UI state
   const [showCandidateSearch, setShowCandidateSearch] = useState(false)
@@ -510,6 +514,36 @@ const JobScoring = () => {
     },
   })
 
+  // Helper: Upload a file with progress using axios
+  const uploadCandidateCvWithProgress = async (
+    file: File,
+    onProgress: (percent: number) => void
+  ): Promise<any> => {
+    const formData = new FormData();
+    formData.append("file", file);
+    // Start at 20%
+    onProgress(20);
+    const response = await axios.post(
+      "http://localhost:8000/api/v1/candidate/analyse_candidate",
+      formData,
+      {
+        headers: { "Content-Type": "multipart/form-data" },
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            // Calculate real percent, but never show less than 20% until done
+            let percent = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+            if (percent < 20) percent = 20;
+            if (percent > 50) percent = 50; // Don't show 100% until upload is done
+            onProgress(percent);
+          }
+        },
+      }
+    );
+    // Set to 100% when upload is actually done
+    onProgress(100);
+    return response.data;
+  };
+
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = event.target.files
     if (fileList) {
@@ -532,44 +566,46 @@ const JobScoring = () => {
 
   const handleSave = async () => {
     if (!inputTitle.trim()) {
-      showSuccessToast("Please enter a job title")
-      return
+      showSuccessToast("Please enter a job title");
+      return;
     }
-
+    setIsUploading(true);
     try {
       // Upload new files and get their names
       const uploadedFileTasks = inputFiles
         .filter((file) => file.file)
         .map(async (file) => {
           if (file.file) {
-            const response = await CandidateService.analyseCandidateCv({
-              formData: { file: file.file },
-            })
-            const fileName = (response as any)?.file_name || file.name
-            return { id: file.id, name: fileName }
+            setFileUploadProgress((prev) => ({ ...prev, [file.id]: 0 }));
+            const response = await uploadCandidateCvWithProgress(file.file, (percent) => {
+              setFileUploadProgress((prev) => ({ ...prev, [file.id]: percent }));
+            });
+            const fileName = response?.file_name || file.name;
+            setFileUploadProgress((prev) => ({ ...prev, [file.id]: 100 }));
+            return { id: file.id, name: fileName };
           }
-          return file
-        })
-      const uploadedFiles = await Promise.all(uploadedFileTasks)
-
+          return file;
+        });
+      const uploadedFiles = await Promise.all(uploadedFileTasks);
       // Get list of files that were already on the server
       const existingFiles = inputFiles
         .filter((file) => !file.file)
-        .map((f) => ({ id: f.id, name: f.name }))
-
+        .map((f) => ({ id: f.id, name: f.name }));
       // Combine and pass to mutation
-      const allFiles = [...existingFiles, ...uploadedFiles]
+      const allFiles = [...existingFiles, ...uploadedFiles];
       const jobData: JobWithFiles = {
         title: inputTitle,
         description: inputDescription,
         files: allFiles,
-      }
-      mutation.mutate(jobData)
+      };
+      mutation.mutate(jobData);
     } catch (error) {
-      console.error("Error saving job:", error)
-      handleError(error as ApiError)
+      console.error("Error saving job:", error);
+      handleError(error as ApiError);
+    } finally {
+      setIsUploading(false);
     }
-  }
+  };
 
   const handleEdit = () => {
     console.log("=== EDIT: Current display files ===", displayFiles)
@@ -823,7 +859,8 @@ const JobScoring = () => {
               <Button
                 colorScheme="blue"
                 onClick={handleSave}
-                loading={mutation.isPending}
+                loading={mutation.isPending || isUploading}
+                disabled={isUploading}
               >
                 Save
               </Button>
@@ -989,9 +1026,29 @@ const JobScoring = () => {
                               size="sm"
                               colorScheme="red"
                               onClick={() => handleDeleteFile(file.id)}
+                              disabled={isUploading}
                             >
                               Delete
                             </Button>
+                            {file.file && fileUploadProgress[file.id] !== undefined && (
+                              <Box mt={2} minW="120px">
+                                <Box
+                                  as="progress"
+                                  {...{
+                                    value: fileUploadProgress[file.id],
+                                    max: 100,
+                                    style: {
+                                      width: '100%',
+                                      height: '8px',
+                                      accentColor: 'var(--chakra-colors-blue-500)'
+                                    }
+                                  }}
+                                />
+                                <Text fontSize="xs" color="gray.500" textAlign="right">
+                                  {fileUploadProgress[file.id]}%
+                                </Text>
+                              </Box>
+                            )}
                           </Table.Cell>
                         </Table.Row>
                       ))}

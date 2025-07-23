@@ -269,6 +269,23 @@ const JobScoring = () => {
     }
   }, [jobData, scoreAnalyses])
 
+  useEffect(() => {
+    if (!jobId) {
+      // Reset all state to initial values
+      setInputTitle("");
+      setInputDescription("");
+      setInputFiles([]);
+      setDisplayTitle("");
+      setDisplayDescription("");
+      setDisplayFiles([]);
+      setCandidates([]);
+      setIsSaved(false);
+      setAnalysisRun(false);
+      setAnalysisScoreResult({});
+      // ...reset any other relevant state
+    }
+  }, [jobId]);
+
   const runAnalysisMutation = useMutation({
     mutationFn: async () => {
       if (!jobId || !jobData || !displayFiles.length) {

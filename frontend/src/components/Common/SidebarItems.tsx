@@ -10,7 +10,9 @@ import { useSyncExternalStore } from "react"
 import type { UserPublic } from "@/client"
 
 export const sidebarItems = [
-  { icon: FiHome, title: "Dashboard", path: "/" },
+  // { icon: FiHome, title: "Dashboard", path: "/" },
+  // Add a sublink for Dashboard that routes to the same page
+  { icon: FiHome, title: "Dashboard", path: "/dashboard" },
   { icon: FiEdit, title: "Job History", path: "/job-editing-list" },
   // Always navigate to /job-scoring with no jobId for a new job score
   { icon: FiClipboard, title: "New Job Score", path: "/job-scoring" },

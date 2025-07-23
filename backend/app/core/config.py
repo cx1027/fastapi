@@ -57,18 +57,18 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
 
-    @computed_field  # type: ignore[prop-decorator]
-    @property
-    def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
-        return MultiHostUrl.build(
-            scheme="postgresql+psycopg2",
-            username=self.POSTGRES_USER,
-            password=self.POSTGRES_PASSWORD,
-            host=self.POSTGRES_SERVER,
-            port=self.POSTGRES_PORT,
-            path=self.POSTGRES_DB,
-        )
-
+    # Remove the decorators below; make this a plain class variable
+    SQLALCHEMY_DATABASE_URI: str = 'postgresql://neondb_owner:npg_dAMRN5epbzZ7@ep-twilight-violet-a85x45e2-pooler.eastus2.azure.neon.tech/neondb?ssl=require&channel_binding=require'
+    # def SQLALCHEMY_DATABASE_URI(self) -> PostgresDsn:
+    #     return MultiHostUrl.build(
+    #         scheme="postgresql+psycopg2",
+    #         username=self.POSTGRES_USER,
+    #         password=self.POSTGRES_PASSWORD,
+    #         host=self.POSTGRES_SERVER,
+    #         port=self.POSTGRES_PORT,
+    #         path=self.POSTGRES_DB,
+    #     )
+      
     SMTP_TLS: bool = True
     SMTP_SSL: bool = False
     SMTP_PORT: int = 587

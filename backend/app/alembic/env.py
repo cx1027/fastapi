@@ -22,7 +22,7 @@ from models import User, Item, Job  # noqa
 config = context.config
 
 # Override sqlalchemy.url with our database URL
-config.set_main_option("sqlalchemy.url", str('postgresql://neondb_owner:npg_dAMRN5epbzZ7@ep-twilight-violet-a85x45e2-pooler.eastus2.azure.neon.tech/neondb?sslmode=require&channel_binding=require'))
+config.set_main_option("sqlalchemy.url", "postgresql://neondb_owner:npg_dAMRN5epbzZ7@ep-twilight-violet-a85x45e2-pooler.eastus2.azure.neon.tech/neondb?ssl=require&channel_binding=require")
 
 # Interpret the config file for Python logging.
 # This line sets up loggers basically.

@@ -5,7 +5,7 @@ from typing import ClassVar
 
 
 class CandidateConfig(BaseSettings):
-    MODEL_NAME: str = "llama-3.3-70b-versatile"
+    MODEL_NAME: str = "llama-3.1-8b-instant"
 
     # Get the absolute path to the upload directory
     BASE_DIR: ClassVar[Path] = Path(__file__).parents[3]  # Go up to the backend directory
